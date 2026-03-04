@@ -1,5 +1,5 @@
 # Hi there, I'm Samar! 👋
-
+ 
 ### 🎓 Engineering Aspirant | Aspiring MEXT Scholar | JEE Candidate
 I am a Class 12 student currently undergoing intensive academic training at **Allen Career Institute, Sikar**. My work focuses on bridging the gap between competitive engineering fundamentals and real-world computational applications.
 
