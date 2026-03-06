@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Samar Aditya | Systems Researcher & Athlete</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --bg-color: #0d1117;
@@ -25,7 +26,7 @@
         }
 
         .container {
-            max-width: 800px;
+            max-width: 850px;
             width: 100%;
             border: 1px solid var(--border-color);
             padding: 40px;
@@ -36,16 +37,18 @@
         header {
             border-bottom: 2px solid var(--accent-color);
             margin-bottom: 30px;
-            padding-bottom: 10px;
+            padding-bottom: 15px;
         }
 
         h1 { color: var(--accent-color); margin: 0; font-size: 1.8rem; }
         h2 { color: var(--terminal-green); border-bottom: 1px solid var(--border-color); padding-bottom: 5px; font-size: 1.2rem; margin-top: 30px; }
         
         .status-bar {
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             color: #8b949e;
             margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .project-card {
@@ -53,9 +56,15 @@
             padding: 15px;
             border-left: 3px solid var(--border-color);
             background: #0d1117;
+            transition: all 0.3s ease;
         }
 
-        .project-title { color: var(--accent-color); font-weight: bold; }
+        .project-card:hover {
+            border-left: 3px solid var(--accent-color);
+            background: #1c2128;
+        }
+
+        .project-title { color: var(--accent-color); font-weight: bold; margin-bottom: 5px; display: flex; align-items: center; gap: 10px; }
         
         .badge {
             display: inline-block;
@@ -63,25 +72,31 @@
             color: white;
             padding: 2px 8px;
             border-radius: 4px;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             margin-right: 5px;
+            margin-bottom: 5px;
         }
 
-        a { color: var(--accent-color); text-decoration: none; }
-        a:hover { text-decoration: underline; }
+        a { color: var(--accent-color); text-decoration: none; transition: color 0.2s; }
+        a:hover { color: var(--terminal-green); text-decoration: underline; }
 
         .contact-info {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 15px;
             font-size: 0.9rem;
         }
+
+        .contact-item { display: flex; align-items: center; gap: 10px; }
+        .contact-item i { color: var(--accent-color); width: 18px; text-align: center; }
 
         footer {
             margin-top: 50px;
             text-align: center;
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             color: #484f58;
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
         }
     </style>
 </head>
@@ -91,43 +106,75 @@
     <header>
         <h1>SAMAR ADITYA</h1>
         <div class="status-bar">
-            SYSTEMS RESEARCHER // NATIONAL ATHLETE // SIKAR, RAJASTHAN
+            Systems Engineering // Computational Physics // National Athlete
         </div>
         <div class="contact-info">
-            <div>GitHub: <a href="https://github.com/thedarkxh">@thedarkxh</a></div>
-            <div>LinkedIn: <a href="https://linkedin.com/in/samar-maharia/">samar-maharia</a></div>
-            <div>Shooter ID: PSHM2411200901</div>
-            <div>Email: <a href="mailto:vvkdn13@gmail.com">vvkdn13@gmail.com</a></div>
+            <div class="contact-item">
+                <i class="fab fa-github"></i>
+                <a href="https://github.com/thedarkxh">@thedarkxh</a>
+            </div>
+            <div class="contact-item">
+                <i class="fab fa-linkedin"></i>
+                <a href="https://www.linkedin.com/in/samar-maharia/">samar-maharia</a>
+            </div>
+            <div class="contact-item">
+                <i class="fas fa-crosshairs"></i>
+                <span>ID: PSHM2411200901 </span>
+            </div>
+            <div class="contact-item">
+                <i class="fas fa-envelope"></i>
+                <a href="mailto:samar.aditya.jp@gmail.com">samar.aditya.jp@gmail.com</a>
+            </div>
         </div>
     </header>
 
     <section id="engineering">
-        <h2>> EXECUTING: TECHNICAL_PORTFOLIO</h2>
+        <h2><i class="fas fa-code"></i> > EXECUTING: CORE_SYSTEMS_PORTFOLIO</h2>
         
         <div class="project-card">
-            <div class="project-title">IronVault</div>
-            <span class="badge">Security</span> <span class="badge">Void Linux</span>
-            <p>A hardware-locked encryption suite utilizing 256-bit logic and HWID (Hardware Identity) verification to ensure data integrity across specific machine architectures.</p>
+            <div class="project-title"><i class="fas fa-shield-halved"></i> IronVault</div>
+            <span class="badge">Security</span> <span class="badge">Symmetric Encryption</span>
+            <p>Advanced data protection suite featuring hardware-locked security logic. Designed for high-integrity environments with minimal dependency overhead. <br>
+            <i class="fas fa-link"></i> <a href="https://github.com/thedarkxh/darkest-data-encoder">Repository Link</a></p>
         </div>
 
         <div class="project-card">
-            <div class="project-title">Japan Recon v12.0</div>
-            <span class="badge">Automation</span> <span class="badge">Python</span>
-            <p>An automated intelligence retrieval terminal designed for tracking international scholarship updates and synthesizing data via custom web-crawling algorithms.</p>
+            <div class="project-title"><i class="fas fa-search"></i> Japan Recon</div>
+            <span class="badge">Automation</span> <span class="badge">Information Retrieval</span>
+            <p>A specialized utility for tracking and synthesizing international scholarship updates through automated web-crawling and data aggregation. <br>
+            <i class="fas fa-link"></i> <a href="https://github.com/thedarkxh/japanxmext-news">Repository Link</a></p>
+        </div>
+    </section>
+
+    <section id="computational">
+        <h2><i class="fas fa-calculator"></i> > EXECUTING: COMPUTATIONAL_RESEARCH</h2>
+
+        <div class="project-card">
+            <div class="project-title"><i class="fas fa-microchip"></i> Math Logic Engine</div>
+            <span class="badge">Applied Mathematics</span> <span class="badge">Logic Processing</span>
+            <p>A computational tool focused on processing mathematical logic and sequence analysis, bridging algorithmic thinking and JEE-level mathematics. <br>
+            <i class="fas fa-link"></i> <a href="https://github.com/thedarkxh/math-logic-engine">Repository Link</a></p>
+        </div>
+
+        <div class="project-card">
+            <div class="project-title"><i class="fas fa-atom"></i> 3D Physics Engine</div>
+            <span class="badge">Physics</span> <span class="badge">Kinematics Simulation</span>
+            <p>Simulation of particle mechanics and projectile motion in a 3D environment, applying core physics principles to real-time computational models. <br>
+            <i class="fas fa-link"></i> <a href="https://github.com/thedarkxh/Physics-Engine-3D/">Repository Link</a></p>
         </div>
     </section>
 
     <section id="athletics">
-        <h2>> EXECUTING: ATHLETIC_RECORD</h2>
+        <h2><i class="fas fa-trophy"></i> > EXECUTING: ATHLETIC_RECORD</h2>
         <div class="project-card">
-            <div class="project-title">National Rifle Association of India (NRAI)</div>
-            <p><strong>National Rank: 822</strong> | 66th National Shooting Championship (2023)</p>
-            <p>Verified Athlete History (2022-2024) across State, North Zone, and National levels. Specialized in 10M Air Pistol (Sub Youth Men).</p>
+            <div class="project-title"><i class="fas fa-medal"></i> NRAI National Ranking</div>
+            <p><strong>National Rank: 822</strong> | 66th National Shooting Championship (2023) </p>
+            <p>Active competitive history (2022-2024) across State, North Zone, and National tiers. Specialized in 10M Air Pistol precision.</p>
         </div>
     </section>
 
     <footer>
-        [TERMINAL SESSION: ACTIVE] - COMPILING FOR MEXT 2027
+        [SESSION: 24-11-2009] - SIKAR, RAJASTHAN // COMPILING FOR MEXT 2027 
     </footer>
 </div>
 
