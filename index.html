@@ -621,19 +621,75 @@
         });
     }
 
+    const fragments = []; // Array to store breaking pieces
+    const eventHorizon = 120; // Black hole capture radius
+
     function draw() {
         ctx.clearRect(0, 0, width, height);
 
+        const centerX = width / 2;
+        const centerY = height / 2;
+
+        // Draw Black Hole
+        let bhGradient = ctx.createRadialGradient(centerX, centerY, 5, centerX, centerY, 200);
+        bhGradient.addColorStop(0, 'rgba(0,0,0,1)');
+        bhGradient.addColorStop(0.15, 'rgba(0,0,0,1)');
+        bhGradient.addColorStop(0.3, 'rgba(249, 115, 22, 0.4)'); // Inner warm accretion disk
+        bhGradient.addColorStop(0.6, 'rgba(220, 38, 38, 0.1)');
+        bhGradient.addColorStop(1, 'transparent');
+        
+        ctx.fillStyle = bhGradient;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 200, 0, Math.PI * 2);
+        ctx.fill();
+
         for (let shape of shapes) {
+            // Distance to Black Hole
+            let dxBH = centerX - shape.x;
+            let dyBH = centerY - shape.y;
+            let distBH = Math.sqrt(dxBH*dxBH + dyBH*dyBH);
+
+            if (distBH < eventHorizon) {
+                // Spaghettification! Break into fragments
+                for (let j = 0; j < 40; j++) {
+                    fragments.push({
+                        x: shape.x + (Math.random() - 0.5) * shape.scale * 2.5,
+                        y: shape.y + (Math.random() - 0.5) * shape.scale * 2.5,
+                        vx: shape.vx + (Math.random() - 0.5) * 6,
+                        vy: shape.vy + (Math.random() - 0.5) * 6,
+                        color: shape.baseColor,
+                        life: 1.0
+                    });
+                }
+                
+                // Respawn shape at edges
+                if (Math.random() > 0.5) {
+                    shape.x = Math.random() > 0.5 ? -150 : width + 150;
+                    shape.y = Math.random() * height;
+                } else {
+                    shape.x = Math.random() * width;
+                    shape.y = Math.random() > 0.5 ? -150 : height + 150;
+                }
+                shape.vx = (Math.random() - 0.5) * 0.4;
+                shape.vy = (Math.random() - 0.5) * 0.4;
+                continue; // Skip rendering the hypercube this frame
+            }
+
+            // Apply Black Hole Gravity
+            let gravity = 1000 / (distBH * distBH); 
+            if (gravity > 2.0) gravity = 2.0; // Cap to avoid teleporting
+            shape.vx += (dxBH / distBH) * gravity;
+            shape.vy += (dyBH / distBH) * gravity;
+
             // Mouse Repulsion (Curvature Point)
-            let dx = shape.x - mouse.x;
-            let dy = shape.y - mouse.y;
-            let dist = Math.sqrt(dx*dx + dy*dy);
+            let dxMouse = shape.x - mouse.x;
+            let dyMouse = shape.y - mouse.y;
+            let distMouse = Math.sqrt(dxMouse*dxMouse + dyMouse*dyMouse);
             
-            if (dist < 300) {
-                let force = (300 - dist) / 300;
-                shape.vx += (dx / dist) * force * 1.5;
-                shape.vy += (dy / dist) * force * 1.5;
+            if (distMouse < 300) {
+                let force = (300 - distMouse) / 300;
+                shape.vx += (dxMouse / distMouse) * force * 1.5;
+                shape.vy += (dyMouse / distMouse) * force * 1.5;
                 shape.angle += force * 0.05; // Spatial warp effect
             }
 
@@ -641,19 +697,15 @@
             shape.vx *= 0.96;
             shape.vy *= 0.96;
 
-            // Maintain drifting momentum
-            if (Math.abs(shape.vx) < 0.2) shape.vx += (Math.random() - 0.5) * 0.15;
-            if (Math.abs(shape.vy) < 0.2) shape.vy += (Math.random() - 0.5) * 0.15;
-
             // Move shape
             shape.x += shape.vx;
             shape.y += shape.vy;
             
             // Wrap around edges to simulate infinity field
-            if (shape.x < -100) shape.x = width + 100;
-            if (shape.x > width + 100) shape.x = -100;
-            if (shape.y < -100) shape.y = height + 100;
-            if (shape.y > height + 100) shape.y = -100;
+            if (shape.x < -150) shape.x = width + 150;
+            if (shape.x > width + 150) shape.x = -150;
+            if (shape.y < -150) shape.y = height + 150;
+            if (shape.y > height + 150) shape.y = -150;
 
             shape.angle += 1;
 
@@ -661,15 +713,10 @@
             let { vertices, edges, dim } = shape.hypercube;
 
             for (let v of vertices) {
-                // Copy vertex to avoid modifying original
                 let currentV = [...v];
-
-                // Apply N-Dimensional rotations
                 for (let plane of shape.planes) {
                     rotatePlane(currentV, plane.axis1, plane.axis2, shape.angle * plane.speed);
                 }
-
-                // Iteratively project from N-D down to 3D
                 for (let d = dim - 1; d >= 3; d--) {
                     let w = currentV[d];
                     let distance = 2.5;
@@ -678,29 +725,21 @@
                         currentV[i] *= w_proj;
                     }
                 }
-
-                // We are now in 3D (indices 0, 1, 2 = x, y, z)
                 let x = currentV[0];
                 let y = currentV[1];
                 let z = currentV[2];
-
-                // 3D -> 2D projection
                 let distance3d = 2.5;
                 let z_proj2d = 1 / (distance3d - z);
-
                 let finalX = x * z_proj2d;
                 let finalY = y * z_proj2d;
-
                 projected2d.push([
                     finalX * shape.scale + shape.x,
                     finalY * shape.scale + shape.y
                 ]);
             }
 
-            // Draw edges
             ctx.strokeStyle = `rgba(${shape.baseColor}, 0.25)`;
             ctx.lineWidth = 1;
-
             ctx.beginPath();
             for (let edge of edges) {
                 let p1 = projected2d[edge[0]];
@@ -710,12 +749,44 @@
             }
             ctx.stroke();
             
-            // Draw vertices
             ctx.fillStyle = `rgba(${shape.baseColor}, 0.5)`;
             for (let p of projected2d) {
                 ctx.beginPath();
                 ctx.arc(p[0], p[1], 1.5, 0, Math.PI * 2);
                 ctx.fill();
+            }
+        }
+
+        // Draw and update fragments
+        for (let i = fragments.length - 1; i >= 0; i--) {
+            let f = fragments[i];
+            
+            let fdx = centerX - f.x;
+            let fdy = centerY - f.y;
+            let fdist = Math.sqrt(fdx*fdx + fdy*fdy);
+            
+            let fgrav = 2000 / (fdist * fdist);
+            if(fgrav > 10) fgrav = 10;
+            
+            // Spiraling effect (tangent velocity)
+            let tangentX = -fdy / fdist;
+            let tangentY = fdx / fdist;
+            
+            f.vx += (fdx / fdist) * fgrav + tangentX * 0.9;
+            f.vy += (fdy / fdist) * fgrav + tangentY * 0.9;
+            
+            f.x += f.vx;
+            f.y += f.vy;
+            f.life -= 0.015; 
+            
+            ctx.fillStyle = `rgba(${f.color}, ${f.life})`;
+            ctx.beginPath();
+            ctx.arc(f.x, f.y, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Remove when dead or sucked into singularity
+            if (f.life <= 0 || fdist < 10) {
+                fragments.splice(i, 1);
             }
         }
 
