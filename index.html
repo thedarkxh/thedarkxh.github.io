@@ -17,14 +17,14 @@
     
     <style>
         :root {
-            --bg-dark: #0a0f1c;
-            --glass-bg: rgba(20, 25, 40, 0.6);
-            --glass-border: rgba(255, 255, 255, 0.08);
-            --text-main: #e2e8f0;
-            --text-muted: #94a3b8;
-            --accent-primary: #3b82f6;
-            --accent-secondary: #8b5cf6;
-            --accent-tertiary: #10b981;
+            --bg-dark: #170d08;
+            --glass-bg: rgba(30, 15, 10, 0.6);
+            --glass-border: rgba(255, 200, 150, 0.08);
+            --text-main: #fff0e6;
+            --text-muted: #d4b8a8;
+            --accent-primary: #f97316;
+            --accent-secondary: #dc2626;
+            --accent-tertiary: #eab308;
             --gradient-primary: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
         }
 
@@ -40,8 +40,8 @@
             font-family: 'Inter', sans-serif;
             line-height: 1.6;
             background-image: 
-                radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.15), transparent 25%),
-                radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.15), transparent 25%);
+                radial-gradient(circle at 15% 50%, rgba(249, 115, 22, 0.12), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(220, 38, 38, 0.12), transparent 25%);
             background-attachment: fixed;
             overflow-x: hidden;
             min-height: 100vh;
@@ -64,15 +64,15 @@
             border-radius: 50%;
             object-fit: cover;
             border: 3px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+            box-shadow: 0 10px 30px rgba(249, 115, 22, 0.4);
             margin-bottom: 20px;
             transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
         }
 
         .profile-img:hover {
             transform: scale(1.05) rotateZ(3deg);
-            box-shadow: 0 15px 40px rgba(139, 92, 246, 0.6);
-            border-color: rgba(139, 92, 246, 0.5);
+            box-shadow: 0 15px 40px rgba(220, 38, 38, 0.6);
+            border-color: rgba(220, 38, 38, 0.5);
         }
 
         /* Ambient Glow */
@@ -83,7 +83,7 @@
             transform: translate(-50%, -50%);
             width: 80vw;
             height: 80vh;
-            background: radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 60%);
+            background: radial-gradient(circle, rgba(249,115,22,0.05) 0%, transparent 60%);
             z-index: -1;
             pointer-events: none;
         }
@@ -155,7 +155,7 @@
 
         .contact-item:hover {
             transform: translateY(-3px);
-            border-color: rgba(59, 130, 246, 0.4);
+            border-color: rgba(249, 115, 22, 0.4);
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
         }
 
@@ -231,7 +231,7 @@
 
         .project-card:hover {
             box-shadow: -20px 25px 50px rgba(0, 0, 0, 0.5);
-            border-color: rgba(139, 92, 246, 0.5);
+            border-color: rgba(220, 38, 38, 0.5);
             /* Transform is handled dynamically by JavaScript */
         }
 
@@ -262,9 +262,9 @@
         }
 
         .badge {
-            background: rgba(59, 130, 246, 0.1);
+            background: rgba(249, 115, 22, 0.1);
             color: var(--accent-primary);
-            border: 1px solid rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(249, 115, 22, 0.2);
             padding: 5px 12px;
             border-radius: 20px;
             font-size: 0.8rem;
@@ -272,8 +272,8 @@
             letter-spacing: 0.5px;
         }
 
-        .badge.math { color: var(--accent-secondary); border-color: rgba(139, 92, 246, 0.2); background: rgba(139, 92, 246, 0.1); }
-        .badge.physics { color: var(--accent-tertiary); border-color: rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.1); }
+        .badge.math { color: var(--accent-secondary); border-color: rgba(220, 38, 38, 0.2); background: rgba(220, 38, 38, 0.1); }
+        .badge.physics { color: var(--accent-tertiary); border-color: rgba(234, 179, 8, 0.2); background: rgba(234, 179, 8, 0.1); }
 
         .project-card p {
             color: var(--text-muted);
@@ -301,7 +301,7 @@
 
         /* Athletics Specific */
         .athletics-card {
-            background: linear-gradient(to bottom right, var(--glass-bg), rgba(30, 41, 59, 0.8));
+            background: linear-gradient(to bottom right, var(--glass-bg), rgba(67, 20, 7, 0.8));
         }
 
         .athletics-card .project-title i {
@@ -468,7 +468,7 @@
     <section id="academic-objectives">
         <h2><i class="fas fa-university"></i> Academic Objectives</h2>
         <div class="grid-cards" style="grid-template-columns: 1fr;">
-            <div class="project-card" style="background: linear-gradient(to bottom right, var(--glass-bg), rgba(88, 28, 135, 0.3));">
+            <div class="project-card" style="background: linear-gradient(to bottom right, var(--glass-bg), rgba(136, 19, 55, 0.3));">
                 <div class="project-title"><i class="fas fa-microscope"></i> Research Goals & MEXT 2027</div>
                 <div class="badges">
                     <span class="badge physics">Quantum Mechanics</span>
@@ -617,7 +617,7 @@
             scale: Math.random() * 30 + 15, // size of the shape
             planes: planes,
             angle: 0,
-            baseColor: dim === 3 ? '16, 185, 129' : dim === 4 ? '59, 130, 246' : dim === 5 ? '139, 92, 246' : '236, 72, 153' // Different color per dimension
+            baseColor: dim === 3 ? '234, 179, 8' : dim === 4 ? '249, 115, 22' : dim === 5 ? '220, 38, 38' : '153, 27, 27' // Warm colors per dimension
         });
     }
 
