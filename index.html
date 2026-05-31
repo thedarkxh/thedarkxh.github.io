@@ -445,104 +445,148 @@
     window.addEventListener('resize', resize);
     resize();
 
-    // 4D Hypercube (Tesseract) vertices
-    const vertices = [];
-    for (let i = 0; i < 16; i++) {
-        let x = (i & 1) ? 1 : -1;
-        let y = (i & 2) ? 1 : -1;
-        let z = (i & 4) ? 1 : -1;
-        let w = (i & 8) ? 1 : -1;
-        vertices.push([x, y, z, w]);
-    }
-
-    // Define edges (connect vertices that differ by exactly 1 coordinate)
-    const edges = [];
-    for (let i = 0; i < 16; i++) {
-        for (let j = i + 1; j < 16; j++) {
-            let diff = 0;
-            for (let k = 0; k < 4; k++) {
-                if (vertices[i][k] !== vertices[j][k]) diff++;
+    // Generate N-Dimensional Hypercube
+    function generateHypercube(dim) {
+        const vertices = [];
+        const numVertices = Math.pow(2, dim);
+        for (let i = 0; i < numVertices; i++) {
+            let vertex = [];
+            for (let d = 0; d < dim; d++) {
+                vertex.push((i & (1 << d)) ? 1 : -1);
             }
-            if (diff === 1) {
-                edges.push([i, j]);
+            vertices.push(vertex);
+        }
+
+        const edges = [];
+        for (let i = 0; i < numVertices; i++) {
+            for (let j = i + 1; j < numVertices; j++) {
+                let diff = 0;
+                for (let d = 0; d < dim; d++) {
+                    if (vertices[i][d] !== vertices[j][d]) diff++;
+                }
+                if (diff === 1) {
+                    edges.push([i, j]);
+                }
             }
         }
+        return { vertices, edges, dim };
     }
 
-    let angle = 0;
+    // Rotation helper for a specific plane
+    function rotatePlane(v, axis1, axis2, angle) {
+        let a1 = v[axis1];
+        let a2 = v[axis2];
+        v[axis1] = a1 * Math.cos(angle) - a2 * Math.sin(angle);
+        v[axis2] = a1 * Math.sin(angle) + a2 * Math.cos(angle);
+    }
+
+    // Create cloud of infinity shapes
+    const shapes = [];
+    const numShapes = 30; // 30 multi-dimensional shapes
+
+    for (let i = 0; i < numShapes; i++) {
+        // Randomly choose dimension between 3 and 6
+        let dim = Math.floor(Math.random() * 4) + 3;
+        
+        // Define random rotation planes to animate
+        let planes = [];
+        let numPlanes = Math.min(4, Math.floor(dim * (dim - 1) / 2));
+        for (let p = 0; p < numPlanes; p++) {
+            let a1 = Math.floor(Math.random() * dim);
+            let a2 = Math.floor(Math.random() * dim);
+            while(a1 === a2) a2 = Math.floor(Math.random() * dim);
+            planes.push({ axis1: a1, axis2: a2, speed: (Math.random() - 0.5) * 0.03 });
+        }
+
+        shapes.push({
+            hypercube: generateHypercube(dim),
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * window.innerHeight,
+            vx: (Math.random() - 0.5) * 0.4,
+            vy: (Math.random() - 0.5) * 0.4,
+            scale: Math.random() * 30 + 15, // size of the shape
+            planes: planes,
+            angle: 0,
+            baseColor: dim === 3 ? '16, 185, 129' : dim === 4 ? '59, 130, 246' : dim === 5 ? '139, 92, 246' : '236, 72, 153' // Different color per dimension
+        });
+    }
 
     function draw() {
         ctx.clearRect(0, 0, width, height);
-        
-        angle += 0.005;
-        const projected2d = [];
 
-        // Rotation matrices in 4D (XY and XW planes)
-        for (let v of vertices) {
-            let x = v[0], y = v[1], z = v[2], w = v[3];
-
-            // Rotate XY
-            let xy_x = x * Math.cos(angle) - y * Math.sin(angle);
-            let xy_y = x * Math.sin(angle) + y * Math.cos(angle);
-            x = xy_x;
-            y = xy_y;
-
-            // Rotate XW
-            let xw_x = x * Math.cos(angle * 0.5) - w * Math.sin(angle * 0.5);
-            let xw_w = x * Math.sin(angle * 0.5) + w * Math.cos(angle * 0.5);
-            x = xw_x;
-            w = xw_w;
-
-            // Rotate ZW
-            let zw_z = z * Math.cos(angle * 0.8) - w * Math.sin(angle * 0.8);
-            let zw_w = z * Math.sin(angle * 0.8) + w * Math.cos(angle * 0.8);
-            z = zw_z;
-            w = zw_w;
-
-            // Distance for 4D -> 3D projection
-            let distance = 2.5;
-            let w_proj = 1 / (distance - w);
+        for (let shape of shapes) {
+            // Move shape
+            shape.x += shape.vx;
+            shape.y += shape.vy;
             
-            // 4D -> 3D
-            let x_proj = x * w_proj;
-            let y_proj = y * w_proj;
-            let z_proj = z * w_proj;
+            // Wrap around edges to simulate infinity field
+            if (shape.x < -100) shape.x = width + 100;
+            if (shape.x > width + 100) shape.x = -100;
+            if (shape.y < -100) shape.y = height + 100;
+            if (shape.y > height + 100) shape.y = -100;
 
-            // Distance for 3D -> 2D projection
-            let distance3d = 2.5;
-            let z_proj2d = 1 / (distance3d - z_proj);
+            shape.angle += 1;
 
-            // 3D -> 2D
-            let finalX = x_proj * z_proj2d;
-            let finalY = y_proj * z_proj2d;
+            const projected2d = [];
+            let { vertices, edges, dim } = shape.hypercube;
 
-            // Scale to screen
-            let scale = Math.min(width, height) * 0.4;
-            projected2d.push([
-                finalX * scale + width / 2,
-                finalY * scale + height / 2
-            ]);
-        }
+            for (let v of vertices) {
+                // Copy vertex to avoid modifying original
+                let currentV = [...v];
 
-        ctx.strokeStyle = 'rgba(59, 130, 246, 0.4)';
-        ctx.lineWidth = 1.5;
+                // Apply N-Dimensional rotations
+                for (let plane of shape.planes) {
+                    rotatePlane(currentV, plane.axis1, plane.axis2, shape.angle * plane.speed);
+                }
 
-        for (let edge of edges) {
-            let p1 = projected2d[edge[0]];
-            let p2 = projected2d[edge[1]];
-            
+                // Iteratively project from N-D down to 3D
+                for (let d = dim - 1; d >= 3; d--) {
+                    let w = currentV[d];
+                    let distance = 2.5;
+                    let w_proj = 1 / (distance - w);
+                    for (let i = 0; i < d; i++) {
+                        currentV[i] *= w_proj;
+                    }
+                }
+
+                // We are now in 3D (indices 0, 1, 2 = x, y, z)
+                let x = currentV[0];
+                let y = currentV[1];
+                let z = currentV[2];
+
+                // 3D -> 2D projection
+                let distance3d = 2.5;
+                let z_proj2d = 1 / (distance3d - z);
+
+                let finalX = x * z_proj2d;
+                let finalY = y * z_proj2d;
+
+                projected2d.push([
+                    finalX * shape.scale + shape.x,
+                    finalY * shape.scale + shape.y
+                ]);
+            }
+
+            // Draw edges
+            ctx.strokeStyle = `rgba(${shape.baseColor}, 0.25)`;
+            ctx.lineWidth = 1;
+
             ctx.beginPath();
-            ctx.moveTo(p1[0], p1[1]);
-            ctx.lineTo(p2[0], p2[1]);
+            for (let edge of edges) {
+                let p1 = projected2d[edge[0]];
+                let p2 = projected2d[edge[1]];
+                ctx.moveTo(p1[0], p1[1]);
+                ctx.lineTo(p2[0], p2[1]);
+            }
             ctx.stroke();
-        }
-
-        // Add subtle nodes
-        ctx.fillStyle = 'rgba(139, 92, 246, 0.6)';
-        for (let p of projected2d) {
-            ctx.beginPath();
-            ctx.arc(p[0], p[1], 3, 0, Math.PI * 2);
-            ctx.fill();
+            
+            // Draw vertices
+            ctx.fillStyle = `rgba(${shape.baseColor}, 0.5)`;
+            for (let p of projected2d) {
+                ctx.beginPath();
+                ctx.arc(p[0], p[1], 1.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
         }
 
         requestAnimationFrame(draw);
