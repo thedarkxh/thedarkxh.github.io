@@ -867,7 +867,9 @@
 
         // Draw and update floating texts
         ctx.textAlign = "center";
-        for (let t of floatingTexts) {
+        for (let i = floatingTexts.length - 1; i >= 0; i--) {
+            let t = floatingTexts[i];
+            
             let dxBH = centerX - t.x;
             let dyBH = centerY - t.y;
             let distBH = Math.sqrt(dxBH*dxBH + dyBH*dyBH);
@@ -910,8 +912,8 @@
             let distMouse = Math.sqrt(dxMouse*dxMouse + dyMouse*dyMouse);
             if (distMouse < 300) {
                 let force = (300 - distMouse) / 300;
-                t.vx += (dxMouse / distMouse) * force * 1.5;
-                t.vy += (dyMouse / distMouse) * force * 1.5;
+                t.vx += (dxMouse / distMouse) * force * 4.0; // Increased force to allow shattering
+                t.vy += (dyMouse / distMouse) * force * 4.0;
             }
 
             // Tile Repulsion
@@ -922,8 +924,8 @@
                 
                 if (distTile < rect.radius) {
                     let force = (rect.radius - distTile) / rect.radius;
-                    t.vx += (dxTile / distTile) * force * 2.0;
-                    t.vy += (dyTile / distTile) * force * 2.0;
+                    t.vx += (dxTile / distTile) * force * 3.0; // Increased force
+                    t.vy += (dyTile / distTile) * force * 3.0;
                 }
             }
 
@@ -932,6 +934,32 @@
 
             t.x += t.vx;
             t.y += t.vy;
+
+            // Break apart if moving too fast (sudden force)
+            let speed = Math.sqrt(t.vx*t.vx + t.vy*t.vy);
+            if (speed > 8 && t.text.length > 1) {
+                ctx.font = `${Math.floor(16 * t.scale)}px monospace`;
+                let totalWidth = ctx.measureText(t.text).width;
+                let charWidth = totalWidth / t.text.length;
+                let startX = t.x - totalWidth / 2 + charWidth / 2;
+                
+                for (let c = 0; c < t.text.length; c++) {
+                    // Ignore empty spaces
+                    if (t.text[c] === ' ') continue;
+
+                    floatingTexts.push({
+                        text: t.text[c],
+                        x: startX + c * charWidth,
+                        y: t.y,
+                        vx: t.vx + (Math.random() - 0.5) * 8, // Explosive scatter
+                        vy: t.vy + (Math.random() - 0.5) * 8,
+                        scale: t.scale,
+                        color: t.color
+                    });
+                }
+                floatingTexts.splice(i, 1);
+                continue; // Skip rendering this frame for the shattered string
+            }
 
             // Wrap around edges
             if (t.x < -200) t.x = width + 200;
