@@ -1,129 +1,348 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Samar Aditya | Systems Researcher & Athlete</title>
+    <meta name="description" content="Portfolio of Samar Aditya: Systems Engineering, Computational Physics, and National Athlete (10M Air Pistol).">
     <link rel="icon" type="image/png" href="logo.png">
     
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         :root {
-            --bg-color: #0d1117;
-            --text-color: #c9d1d9;
-            --accent-color: #58a6ff;
-            --terminal-green: #3fb950;
-            --border-color: #30363d;
+            --bg-dark: #0a0f1c;
+            --glass-bg: rgba(20, 25, 40, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #8b5cf6;
+            --accent-tertiary: #10b981;
+            --gradient-primary: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Courier New', Courier, monospace;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
             line-height: 1.6;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.15), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.15), transparent 25%);
+            background-attachment: fixed;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Ambient Glow */
+        .ambient-glow {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80vw;
+            height: 80vh;
+            background: radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 60%);
+            z-index: -1;
+            pointer-events: none;
         }
 
         .container {
-            max-width: 850px;
-            width: 100%;
-            border: 1px solid var(--border-color);
-            padding: 40px;
-            background-color: #161b22;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 60px 20px;
         }
 
+        /* Header Section */
         header {
-            border-bottom: 2px solid var(--accent-color);
-            margin-bottom: 30px;
-            padding-bottom: 15px;
+            text-align: center;
+            margin-bottom: 70px;
+            animation: fadeInDown 1s ease-out;
         }
 
-        h1 { color: var(--accent-color); margin: 0; font-size: 1.8rem; }
-        h2 { color: var(--terminal-green); border-bottom: 1px solid var(--border-color); padding-bottom: 5px; font-size: 1.2rem; margin-top: 30px; }
-        
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+            letter-spacing: -1px;
+        }
+
         .status-bar {
-            font-size: 0.85rem;
-            color: #8b949e;
-            margin-bottom: 20px;
-            text-transform: uppercase;
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            font-weight: 300;
+            margin-bottom: 30px;
             letter-spacing: 1px;
+            text-transform: uppercase;
         }
 
-        .project-card {
-            margin-bottom: 20px;
-            padding: 15px;
-            border-left: 3px solid var(--border-color);
-            background: #0d1117;
+        .contact-info {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 25px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--glass-bg);
+            padding: 10px 20px;
+            border-radius: 30px;
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+            font-size: 0.95rem;
             transition: all 0.3s ease;
         }
 
-        .project-card:hover {
-            border-left: 3px solid var(--accent-color);
-            background: #1c2128;
+        .contact-item i {
+            color: var(--accent-primary);
         }
 
-        .project-title { color: var(--accent-color); font-weight: bold; margin-bottom: 5px; display: flex; align-items: center; gap: 10px; }
-        
-        .badge {
-            display: inline-block;
-            background: #238636;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            margin-right: 5px;
-            margin-bottom: 5px;
+        .contact-item a {
+            color: var(--text-main);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
         }
 
-        a { color: var(--accent-color); text-decoration: none; transition: color 0.2s; }
-        a:hover { color: var(--terminal-green); text-decoration: underline; }
+        .contact-item:hover {
+            transform: translateY(-3px);
+            border-color: rgba(59, 130, 246, 0.4);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
 
-        .contact-info {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+        .contact-item a:hover {
+            color: var(--accent-primary);
+        }
+
+        /* Section Headings */
+        h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
             gap: 15px;
-            font-size: 0.9rem;
+            color: #fff;
         }
 
-        .contact-item { display: flex; align-items: center; gap: 10px; }
-        .contact-item i { color: var(--accent-color); width: 18px; text-align: center; }
+        h2 i {
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
 
+        section {
+            margin-bottom: 80px;
+            animation: fadeIn 1.2s ease-out;
+        }
+
+        /* Grid Layout for Cards */
+        .grid-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+        }
+
+        /* Glassmorphism Cards */
+        .project-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--gradient-primary);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s ease;
+        }
+
+        .project-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: rgba(139, 92, 246, 0.3);
+        }
+
+        .project-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .project-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .badges {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent-primary);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .badge.math { color: var(--accent-secondary); border-color: rgba(139, 92, 246, 0.2); background: rgba(139, 92, 246, 0.1); }
+        .badge.physics { color: var(--accent-tertiary); border-color: rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.1); }
+
+        .project-card p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            margin-bottom: 25px;
+            flex-grow: 1;
+        }
+
+        .repo-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--accent-primary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+            align-self: flex-start;
+        }
+
+        .repo-link:hover {
+            color: var(--accent-secondary);
+            gap: 12px;
+        }
+
+        /* Athletics Specific */
+        .athletics-card {
+            background: linear-gradient(to bottom right, var(--glass-bg), rgba(30, 41, 59, 0.8));
+        }
+
+        .athletics-card .project-title i {
+            color: #fbbf24;
+        }
+
+        .rank-highlight {
+            font-size: 1.2rem;
+            color: #e2e8f0;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        .rank-highlight strong {
+            color: #fbbf24;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.4rem;
+        }
+
+        /* Footer */
         footer {
-            margin-top: 50px;
+            margin-top: 100px;
             text-align: center;
-            font-size: 0.75rem;
-            color: #484f58;
-            border-top: 1px solid var(--border-color);
-            padding-top: 20px;
+            padding: 40px 0;
+            border-top: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            position: relative;
         }
 
+        footer span {
+            display: inline-block;
+            background: var(--glass-bg);
+            padding: 10px 25px;
+            border-radius: 30px;
+            border: 1px solid var(--glass-border);
+            letter-spacing: 1px;
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            .grid-cards { grid-template-columns: 1fr; }
+            .contact-info { flex-direction: column; align-items: center; }
+            .contact-item { width: 100%; justify-content: center; }
+        }
     </style>
 </head>
 <body>
+
+<div class="ambient-glow"></div>
 
 <div class="container">
     <header>
         <h1>SAMAR ADITYA</h1>
         <div class="status-bar">
-            Systems Engineering // Computational Physics // National Athlete
+            Systems Engineering • Computational Physics • National Athlete
         </div>
         <div class="contact-info">
             <div class="contact-item">
                 <i class="fab fa-github"></i>
-                <a href="https://github.com/thedarkxh">@thedarkxh</a>
+                <a href="https://github.com/thedarkxh" target="_blank">@thedarkxh</a>
             </div>
             <div class="contact-item">
                 <i class="fab fa-linkedin"></i>
-                <a href="https://www.linkedin.com/in/samar-maharia/">samar-maharia</a>
+                <a href="https://www.linkedin.com/in/samar-maharia/" target="_blank">samar-maharia</a>
             </div>
             <div class="contact-item">
                 <i class="fas fa-crosshairs"></i>
-                <span>ID: PSHM2411200901 </span>
+                <span>NRAI: PSHM2411200901</span>
             </div>
             <div class="contact-item">
                 <i class="fas fa-envelope"></i>
@@ -132,54 +351,71 @@
         </div>
     </header>
 
-
     <section id="engineering">
-        <h2><i class="fas fa-code"></i> > EXECUTING: CORE_SYSTEMS_PORTFOLIO</h2>
-        
-        <div class="project-card">
-            <div class="project-title"><i class="fas fa-shield-halved"></i> IronVault</div>
-            <span class="badge">Security</span> <span class="badge">Symmetric Encryption</span>
-            <p>Advanced data protection suite featuring hardware-locked security logic. Designed for high-integrity environments with minimal dependency overhead. <br>
-            <i class="fas fa-link"></i> <a href="https://github.com/thedarkxh/darkest-data-encoder">Repository Link</a></p>
-        </div>
+        <h2><i class="fas fa-layer-group"></i> Core Systems Portfolio</h2>
+        <div class="grid-cards">
+            <div class="project-card">
+                <div class="project-title"><i class="fas fa-shield-halved"></i> IronVault</div>
+                <div class="badges">
+                    <span class="badge">Security</span>
+                    <span class="badge">Symmetric Encryption</span>
+                </div>
+                <p>Advanced data protection suite featuring hardware-locked security logic. Designed for high-integrity environments with minimal dependency overhead.</p>
+                <a href="https://github.com/thedarkxh/darkest-data-encoder" class="repo-link" target="_blank">View Repository <i class="fas fa-arrow-right"></i></a>
+            </div>
 
-        <div class="project-card">
-            <div class="project-title"><i class="fas fa-search"></i> Japan Recon</div>
-            <span class="badge">Automation</span> <span class="badge">Information Retrieval</span>
-            <p>A specialized utility for tracking and synthesizing international scholarship updates through automated web-crawling and data aggregation. <br>
-            <i class="fas fa-link"></i> <a href="https://github.com/thedarkxh/japanxmext-news">Repository Link</a></p>
+            <div class="project-card">
+                <div class="project-title"><i class="fas fa-globe-asia"></i> Japan Recon</div>
+                <div class="badges">
+                    <span class="badge">Automation</span>
+                    <span class="badge">Information Retrieval</span>
+                </div>
+                <p>A specialized utility for tracking and synthesizing international scholarship updates through automated web-crawling and data aggregation.</p>
+                <a href="https://github.com/thedarkxh/japanxmext-news" class="repo-link" target="_blank">View Repository <i class="fas fa-arrow-right"></i></a>
+            </div>
         </div>
     </section>
 
     <section id="computational">
-        <h2><i class="fas fa-calculator"></i> > EXECUTING: COMPUTATIONAL_RESEARCH</h2>
+        <h2><i class="fas fa-microchip"></i> Computational Research</h2>
+        <div class="grid-cards">
+            <div class="project-card">
+                <div class="project-title"><i class="fas fa-square-root-variable"></i> Math Logic Engine</div>
+                <div class="badges">
+                    <span class="badge math">Applied Mathematics</span>
+                    <span class="badge math">Logic Processing</span>
+                </div>
+                <p>A computational tool focused on processing mathematical logic and sequence analysis, bridging algorithmic thinking and JEE-level mathematics.</p>
+                <a href="https://github.com/thedarkxh/math-logic-engine" class="repo-link" target="_blank">View Repository <i class="fas fa-arrow-right"></i></a>
+            </div>
 
-        <div class="project-card">
-            <div class="project-title"><i class="fas fa-microchip"></i> Math Logic Engine</div>
-            <span class="badge">Applied Mathematics</span> <span class="badge">Logic Processing</span>
-            <p>A computational tool focused on processing mathematical logic and sequence analysis, bridging algorithmic thinking and JEE-level mathematics. <br>
-            <i class="fas fa-link"></i> <a href="https://github.com/thedarkxh/math-logic-engine">Repository Link</a></p>
-        </div>
-
-        <div class="project-card">
-            <div class="project-title"><i class="fas fa-atom"></i> 3D Physics Engine</div>
-            <span class="badge">Physics</span> <span class="badge">Kinematics Simulation</span>
-            <p>Simulation of particle mechanics and projectile motion in a 3D environment, applying core physics principles to real-time computational models. <br>
-            <i class="fas fa-link"></i> <a href="https://github.com/thedarkxh/Physics-Engine-3D/">Repository Link</a></p>
+            <div class="project-card">
+                <div class="project-title"><i class="fas fa-atom"></i> 3D Physics Engine</div>
+                <div class="badges">
+                    <span class="badge physics">Physics</span>
+                    <span class="badge physics">Kinematics Simulation</span>
+                </div>
+                <p>Simulation of particle mechanics and projectile motion in a 3D environment, applying core physics principles to real-time computational models.</p>
+                <a href="https://github.com/thedarkxh/Physics-Engine-3D/" class="repo-link" target="_blank">View Repository <i class="fas fa-arrow-right"></i></a>
+            </div>
         </div>
     </section>
 
     <section id="athletics">
-        <h2><i class="fas fa-trophy"></i> > EXECUTING: ATHLETIC_RECORD</h2>
-        <div class="project-card">
-            <div class="project-title"><i class="fas fa-medal"></i> NRAI National Ranking</div>
-            <p><strong>National Rank: 822</strong> | 66th National Shooting Championship (2023) </p>
-            <p>Active competitive history (2022-2024) across State, North Zone, and National tiers. Specialized in 10M Air Pistol precision.</p>
+        <h2><i class="fas fa-medal"></i> Athletic Record</h2>
+        <div class="grid-cards" style="grid-template-columns: 1fr;">
+            <div class="project-card athletics-card">
+                <div class="project-title"><i class="fas fa-trophy"></i> NRAI National Ranking</div>
+                <div class="rank-highlight">
+                    <strong>Rank: 822</strong> | 66th National Shooting Championship (2023)
+                </div>
+                <p>Active competitive history (2022-2024) across State, North Zone, and National tiers. Specialized in 10M Air Pistol precision.</p>
+            </div>
         </div>
     </section>
 
     <footer>
-        [SESSION: 24-11-2009] - SIKAR, RAJASTHAN // COMPILING FOR MEXT 2027 
+        <span>[SESSION: 24-11-2009] • SIKAR, RAJASTHAN • COMPILING FOR MEXT 2027</span>
     </footer>
 </div>
 
