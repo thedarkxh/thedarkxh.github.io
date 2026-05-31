@@ -760,10 +760,45 @@
         const centerX = width / 2;
         const centerY = height / 2;
 
-        // Draw Majestic Black Hole
+        // Update all star physics first
+        for (let star of stars) {
+            star.angle += star.speed;
+        }
+
+        // Function to render stars based on Z-depth (front or back of the black hole)
+        const renderStars = (isFront) => {
+            ctx.shadowBlur = 12;
+            ctx.shadowColor = 'rgba(217, 119, 6, 0.8)';
+            for (let star of stars) {
+                // Determine if star is in the front or back half of its orbit
+                let isStarFront = Math.sin(star.angle) >= 0;
+                if (isFront !== isStarFront) continue;
+                
+                let starX = centerX + Math.cos(star.angle) * star.radius;
+                let starY = centerY + Math.sin(star.angle) * star.radius * 0.5; // Flatter elliptical tilt for 3D effect
+                
+                // Add slight spatial warp if mouse is nearby
+                let distMouseStar = Math.sqrt(Math.pow(starX - mouse.x, 2) + Math.pow(starY - mouse.y, 2));
+                if (distMouseStar < 200) {
+                    starX -= (starX - mouse.x) * 0.08;
+                    starY -= (starY - mouse.y) * 0.08;
+                }
+
+                ctx.fillStyle = star.color + star.alpha + ')';
+                ctx.beginPath();
+                ctx.arc(starX, starY, star.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.shadowBlur = 0; // Reset for rest of rendering
+        };
+
+        // 1. Render Back Stars
+        renderStars(false);
+
+        // 2. Draw Majestic Black Hole (Obscures the back stars)
         let bhGradient = ctx.createRadialGradient(centerX, centerY, 5, centerX, centerY, 250);
         bhGradient.addColorStop(0, 'rgba(0,0,0,1)');
-        bhGradient.addColorStop(0.12, 'rgba(0,0,0,1)'); // Event Horizon
+        bhGradient.addColorStop(0.12, 'rgba(0,0,0,1)'); // Solid Event Horizon
         bhGradient.addColorStop(0.18, 'rgba(217, 119, 6, 0.85)'); // Intense Photon Ring
         bhGradient.addColorStop(0.4, 'rgba(154, 52, 18, 0.2)'); // Outer Accretion Disk
         bhGradient.addColorStop(1, 'transparent');
@@ -773,28 +808,8 @@
         ctx.arc(centerX, centerY, 250, 0, Math.PI * 2);
         ctx.fill();
 
-        // Draw Galaxy Stars with Bloom (Shadow Blur)
-        ctx.shadowBlur = 12;
-        ctx.shadowColor = 'rgba(217, 119, 6, 0.8)';
-        for (let star of stars) {
-            star.angle += star.speed;
-            
-            let starX = centerX + Math.cos(star.angle) * star.radius;
-            let starY = centerY + Math.sin(star.angle) * star.radius * 0.5; // Flatter elliptical tilt for 3D effect
-            
-            // Add slight spatial warp if mouse is nearby
-            let distMouseStar = Math.sqrt(Math.pow(starX - mouse.x, 2) + Math.pow(starY - mouse.y, 2));
-            if (distMouseStar < 200) {
-                starX -= (starX - mouse.x) * 0.08;
-                starY -= (starY - mouse.y) * 0.08;
-            }
-
-            ctx.fillStyle = star.color + star.alpha + ')';
-            ctx.beginPath();
-            ctx.arc(starX, starY, star.size, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        ctx.shadowBlur = 0; // Reset for rest of rendering
+        // 3. Render Front Stars (Passes over the black hole)
+        renderStars(true);
 
         // Reset tile target tilts and calculate mouse influence on the invisible layer
         for (let rect of tileRects) {
