@@ -219,14 +219,36 @@
         .project-card::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
+            top: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0%;
             height: 4px;
             background: var(--gradient-primary);
-            transform: scaleX(0);
-            transform-origin: left;
-            transition: transform 0.4s ease;
+            border-radius: 10px;
+            transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+            opacity: 0.8;
+            z-index: -1;
+            box-shadow: 0 0 15px var(--accent-secondary);
+        }
+
+        .project-card:hover::before {
+            width: 150%;
+            height: 150%;
+            top: -25%;
+            left: -25%;
+            transform: translateX(0);
+            border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+            opacity: 0.15;
+            filter: blur(20px);
+            animation: poisonWobble 5s ease-in-out infinite;
+        }
+
+        @keyframes poisonWobble {
+            0% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; transform: translateX(0) scale(1); }
+            33% { border-radius: 70% 30% 50% 50% / 30% 30% 70% 70%; transform: translateX(-5%) scale(1.05); }
+            66% { border-radius: 50% 50% 30% 70% / 50% 70% 30% 30%; transform: translateX(5%) scale(0.95); }
+            100% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; transform: translateX(0) scale(1); }
         }
 
         .project-card:hover {
