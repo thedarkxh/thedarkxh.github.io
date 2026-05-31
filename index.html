@@ -757,23 +757,26 @@
         });
     }
 
-    // Initialize Nebula Clouds (Volumetric Gas)
+    // Initialize Binary Nebula Clouds (Volumetric Gas)
     const nebulaClouds = [];
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 40; i++) { // 40 clouds total for two nebulae
         nebulaClouds.push({
+            coreId: i % 2, // Assign to Core A or Core B
             angle: Math.random() * Math.PI * 2,
-            radius: Math.random() * 180, // Spread around the center
-            speed: (Math.random() - 0.5) * 0.003, // Slow drift
-            size: Math.random() * 250 + 150, // Massive clouds
+            radius: Math.random() * 150, // Tighter spread around parent core
+            speed: (Math.random() - 0.5) * 0.005, // Swirl speed
+            size: Math.random() * 200 + 100, // Massive clouds
             color: [
                 'rgba(217, 119, 6, ', // Amber
                 'rgba(154, 52, 18, ', // Bronze
                 'rgba(212, 175, 55, ', // Gold
-                'rgba(110, 36, 12, '   // Dark Warm Brown
+                'rgba(220, 38, 38, '   // Supernova Red
             ][Math.floor(Math.random() * 4)],
             alpha: Math.random() * 0.15 + 0.05
         });
     }
+
+    let binaryAngle = 0; // Tracks the orbit of the two nebulae
 
     function draw() {
         ctx.clearRect(0, 0, width, height);
@@ -816,13 +819,24 @@
         // 1. Render Back Stars
         renderStars(false);
 
-        // 2. Draw Volumetric Nebula (Replaces Black Hole)
+        // Update Binary System Orbit
+        binaryAngle += 0.002;
+        let binaryDist = 180;
+        let coreAx = centerX + Math.cos(binaryAngle) * binaryDist;
+        let coreAy = centerY + Math.sin(binaryAngle) * binaryDist * 0.5;
+        let coreBx = centerX - Math.cos(binaryAngle) * binaryDist;
+        let coreBy = centerY - Math.sin(binaryAngle) * binaryDist * 0.5;
+
+        // 2. Draw Volumetric Nebula Binary System
         for (let cloud of nebulaClouds) {
             cloud.angle += cloud.speed;
             
-            // Orbit the center slowly
-            let cx = centerX + Math.cos(cloud.angle) * cloud.radius;
-            let cy = centerY + Math.sin(cloud.angle) * cloud.radius * 0.6; // 3D tilt
+            let parentX = cloud.coreId === 0 ? coreAx : coreBx;
+            let parentY = cloud.coreId === 0 ? coreAy : coreBy;
+
+            // Orbit the parent core
+            let cx = parentX + Math.cos(cloud.angle) * cloud.radius;
+            let cy = parentY + Math.sin(cloud.angle) * cloud.radius * 0.6; // 3D tilt
             
             // Subtle spatial drag from mouse
             let distMouseCloud = Math.sqrt(Math.pow(cx - mouse.x, 2) + Math.pow(cy - mouse.y, 2));
@@ -842,17 +856,19 @@
             ctx.fill();
         }
 
-        // Central Bright Core (Starbirth region of the Nebula)
-        let coreGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 180);
-        coreGradient.addColorStop(0, 'rgba(255, 245, 230, 0.9)'); // Bright hot core
-        coreGradient.addColorStop(0.15, 'rgba(217, 119, 6, 0.6)'); // Amber halo
+        // Central Supernova (Collision bridge between the two nebulae)
+        let coreGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 280);
+        coreGradient.addColorStop(0, 'rgba(255, 255, 255, 1)'); // Blinding white hot center
+        coreGradient.addColorStop(0.08, 'rgba(255, 245, 230, 0.9)');
+        coreGradient.addColorStop(0.25, 'rgba(249, 115, 22, 0.7)'); // Violent orange
+        coreGradient.addColorStop(0.5, 'rgba(220, 38, 38, 0.25)'); // Deep red shockwave edge
         coreGradient.addColorStop(1, 'transparent');
         ctx.fillStyle = coreGradient;
         ctx.beginPath();
-        ctx.arc(centerX, centerY, 180, 0, Math.PI * 2);
+        ctx.arc(centerX, centerY, 280, 0, Math.PI * 2);
         ctx.fill();
 
-        // 3. Render Front Stars (Passes over the Nebula)
+        // 3. Render Front Stars (Passes over the Binary Nebula)
         renderStars(true);
 
         // Reset tile target tilts and calculate mouse influence on the invisible layer
@@ -872,13 +888,13 @@
         }
 
         for (let shape of shapes) {
-            // Distance to Nebula Core
+            // Distance to Central Supernova Core (Center of Mass)
             let dxBH = centerX - shape.x;
             let dyBH = centerY - shape.y;
             let distBH = Math.sqrt(dxBH*dxBH + dyBH*dyBH);
 
             if (distBH < eventHorizon) {
-                // Break apart into fragments due to intense heat/density of the nebula
+                // Break apart into fragments due to intense heat/density of the Supernova
 
                 for (let j = 0; j < 40; j++) {
                     fragments.push({
@@ -904,7 +920,7 @@
                 continue; // Skip rendering the hypercube this frame
             }
 
-            // Apply Nebula Gravity
+            // Apply Supernova Gravity (Center of Mass)
             let gravity = 1000 / (distBH * distBH); 
             if (gravity > 2.0) gravity = 2.0; // Cap to avoid teleporting
             shape.vx += (dxBH / distBH) * gravity;
