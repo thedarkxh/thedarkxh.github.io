@@ -565,30 +565,7 @@
         }
     });
 
-    // 3D Card Parallax Tilt Effect
-    const cards = document.querySelectorAll('.project-card');
-    cards.forEach(card => {
-        card.addEventListener('mousemove', e => {
-            const rect = card.getBoundingClientRect();
-            const x = e.clientX - rect.left; 
-            const y = e.clientY - rect.top;  
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2;
-            const rotateX = ((y - centerY) / centerY) * -8; // 8 deg max tilt
-            const rotateY = ((x - centerX) / centerX) * 8;
-            
-            card.style.transform = `translateY(-10px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-        });
-
-        card.addEventListener('mouseenter', () => {
-            card.style.transition = 'transform 0.1s ease-out, box-shadow 0.1s ease-out'; 
-        });
-
-        card.addEventListener('mouseleave', () => {
-            card.style.transition = 'all 0.5s cubic-bezier(0.23, 1, 0.32, 1)'; 
-            card.style.transform = `translateY(0px) rotateX(0deg) rotateY(0deg)`;
-        });
-    });
+    // 3D Parallax Tilt logic moved to physics engine loop to combine forces
 
     // Create cloud of infinity shapes
     const shapes = [];
@@ -630,9 +607,16 @@
         tileRects = Array.from(document.querySelectorAll('.project-card')).map(el => {
             let rect = el.getBoundingClientRect();
             return {
+                el: el,
                 x: rect.left + rect.width / 2,
                 y: rect.top + rect.height / 2,
-                radius: Math.max(rect.width, rect.height) / 2 + 50 // 50px invisible border padding
+                width: rect.width,
+                height: rect.height,
+                radius: Math.max(rect.width, rect.height) / 2 + 50, // 50px invisible border padding
+                tiltX: 0,
+                tiltY: 0,
+                targetTiltX: 0,
+                targetTiltY: 0
             };
         });
     }
@@ -658,6 +642,22 @@
         ctx.beginPath();
         ctx.arc(centerX, centerY, 200, 0, Math.PI * 2);
         ctx.fill();
+
+        // Reset tile target tilts and calculate mouse influence on the invisible layer
+        for (let rect of tileRects) {
+            rect.targetTiltX = 0;
+            rect.targetTiltY = 0;
+            
+            let dxMouseTile = mouse.x - rect.x;
+            let dyMouseTile = mouse.y - rect.y;
+            let distMouseTile = Math.sqrt(dxMouseTile*dxMouseTile + dyMouseTile*dyMouseTile);
+            
+            // If mouse is inside the invisible layer, tilt the tile
+            if (distMouseTile < rect.radius) {
+                rect.targetTiltX = (dyMouseTile / (rect.height / 2)) * -8;
+                rect.targetTiltY = (dxMouseTile / (rect.width / 2)) * 8;
+            }
+        }
 
         for (let shape of shapes) {
             // Distance to Black Hole
@@ -720,6 +720,10 @@
                     shape.vx += (dxTile / distTile) * force * 2.0;
                     shape.vy += (dyTile / distTile) * force * 2.0;
                     shape.angle += force * 0.05; // Spatial warp effect
+
+                    // Shape impacting the invisible layer physically tilts the tile!
+                    rect.targetTiltX += (dyTile / (rect.height / 2)) * force * -6;
+                    rect.targetTiltY += (dxTile / (rect.width / 2)) * force * 6;
                 }
             }
 
@@ -823,6 +827,30 @@
             // Remove when dead or sucked into singularity
             if (f.life <= 0 || fdist < 10) {
                 fragments.splice(i, 1);
+            }
+        }
+
+        // Apply physics-based tilt to tiles combining all forces on the invisible layer
+        for (let rect of tileRects) {
+            // Clamp target tilt so it doesn't spin out of control from multiple impacts
+            if (rect.targetTiltX > 12) rect.targetTiltX = 12;
+            if (rect.targetTiltX < -12) rect.targetTiltX = -12;
+            if (rect.targetTiltY > 12) rect.targetTiltY = 12;
+            if (rect.targetTiltY < -12) rect.targetTiltY = -12;
+
+            // Lerp interpolation for buttery smooth physics response
+            rect.tiltX += (rect.targetTiltX - rect.tiltX) * 0.15;
+            rect.tiltY += (rect.targetTiltY - rect.tiltY) * 0.15;
+
+            // Apply transform dynamically based on forces
+            if (Math.abs(rect.tiltX) > 0.1 || Math.abs(rect.tiltY) > 0.1) {
+                rect.el.style.transform = `translateY(-10px) rotateX(${rect.tiltX}deg) rotateY(${rect.tiltY}deg)`;
+                rect.el.style.boxShadow = `-20px 25px 50px rgba(0, 0, 0, 0.5)`;
+                rect.el.style.borderColor = `rgba(220, 38, 38, 0.5)`;
+            } else {
+                rect.el.style.transform = `translateY(0px) rotateX(0deg) rotateY(0deg)`;
+                rect.el.style.boxShadow = `0 10px 30px rgba(0, 0, 0, 0.2)`;
+                rect.el.style.borderColor = `rgba(255, 200, 150, 0.08)`;
             }
         }
 
