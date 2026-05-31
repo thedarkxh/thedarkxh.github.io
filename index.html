@@ -609,6 +609,33 @@
     const fragments = []; // Array to store breaking pieces
     const eventHorizon = 120; // Black hole capture radius
 
+    const textSnippets = [
+        "E = mc²",
+        "iℏ(∂Ψ/∂t) = HΨ",
+        "R_μν - 1/2 R g_μν + Λ g_μν = (8πG/c^4) T_μν",
+        "S = k_B \\ln W",
+        "∇ ⋅ E = ρ / ε_0",
+        "Δx Δp ≥ ℏ / 2",
+        "class QuantumState {",
+        "std::vector<Particle> universe;",
+        "import numpy as np",
+        "while(entropy < MAX) { expand(); }",
+        "if (state.collapse()) return;"
+    ];
+
+    const floatingTexts = [];
+    for (let i = 0; i < 20; i++) {
+        floatingTexts.push({
+            text: textSnippets[Math.floor(Math.random() * textSnippets.length)],
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * window.innerHeight,
+            vx: (Math.random() - 0.5) * 0.4,
+            vy: (Math.random() - 0.5) * 0.4,
+            scale: Math.random() * 0.6 + 0.6, // 0.6 to 1.2 scale
+            color: `rgba(255, 255, 255, ${Math.random() * 0.2 + 0.1})` // faint white
+        });
+    }
+
     // Tile Invisible Borders (Repulsion Fields)
     let tileRects = [];
     function updateTileRects() {
@@ -836,6 +863,85 @@
             if (f.life <= 0 || fdist < 10) {
                 fragments.splice(i, 1);
             }
+        }
+
+        // Draw and update floating texts
+        ctx.textAlign = "center";
+        for (let t of floatingTexts) {
+            let dxBH = centerX - t.x;
+            let dyBH = centerY - t.y;
+            let distBH = Math.sqrt(dxBH*dxBH + dyBH*dyBH);
+
+            if (distBH < eventHorizon) {
+                // Spaghettification fragments for text
+                for (let j = 0; j < 5; j++) {
+                    fragments.push({
+                        x: t.x + (Math.random() - 0.5) * 15,
+                        y: t.y + (Math.random() - 0.5) * 15,
+                        vx: (t.vx * 0.5) + (Math.random() - 0.5) * 2,
+                        vy: (t.vy * 0.5) + (Math.random() - 0.5) * 2,
+                        color: '200, 200, 200',
+                        life: 1.0
+                    });
+                }
+                
+                // Respawn text at edges
+                if (Math.random() > 0.5) {
+                    t.x = Math.random() > 0.5 ? -200 : width + 200;
+                    t.y = Math.random() * height;
+                } else {
+                    t.x = Math.random() * width;
+                    t.y = Math.random() > 0.5 ? -200 : height + 200;
+                }
+                t.vx = (Math.random() - 0.5) * 0.4;
+                t.vy = (Math.random() - 0.5) * 0.4;
+                t.text = textSnippets[Math.floor(Math.random() * textSnippets.length)];
+                continue;
+            }
+
+            let gravity = 1000 / (distBH * distBH); 
+            if (gravity > 2.0) gravity = 2.0;
+            t.vx += (dxBH / distBH) * gravity;
+            t.vy += (dyBH / distBH) * gravity;
+
+            // Mouse Repulsion
+            let dxMouse = t.x - mouse.x;
+            let dyMouse = t.y - mouse.y;
+            let distMouse = Math.sqrt(dxMouse*dxMouse + dyMouse*dyMouse);
+            if (distMouse < 300) {
+                let force = (300 - distMouse) / 300;
+                t.vx += (dxMouse / distMouse) * force * 1.5;
+                t.vy += (dyMouse / distMouse) * force * 1.5;
+            }
+
+            // Tile Repulsion
+            for (let rect of tileRects) {
+                let dxTile = t.x - rect.x;
+                let dyTile = t.y - rect.y;
+                let distTile = Math.sqrt(dxTile*dxTile + dyTile*dyTile);
+                
+                if (distTile < rect.radius) {
+                    let force = (rect.radius - distTile) / rect.radius;
+                    t.vx += (dxTile / distTile) * force * 2.0;
+                    t.vy += (dyTile / distTile) * force * 2.0;
+                }
+            }
+
+            t.vx *= 0.96;
+            t.vy *= 0.96;
+
+            t.x += t.vx;
+            t.y += t.vy;
+
+            // Wrap around edges
+            if (t.x < -200) t.x = width + 200;
+            if (t.x > width + 200) t.x = -200;
+            if (t.y < -200) t.y = height + 200;
+            if (t.y > height + 200) t.y = -200;
+
+            ctx.fillStyle = t.color;
+            ctx.font = `${Math.floor(16 * t.scale)}px monospace`;
+            ctx.fillText(t.text, t.x, t.y);
         }
 
         // Apply physics-based tilt to tiles combining all forces on the invisible layer
