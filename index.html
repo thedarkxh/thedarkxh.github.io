@@ -47,6 +47,17 @@
             min-height: 100vh;
         }
 
+        #canvas-4d {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -2;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
         /* Ambient Glow */
         .ambient-glow {
             position: fixed;
@@ -323,6 +334,7 @@
 </head>
 <body>
 
+<canvas id="canvas-4d"></canvas>
 <div class="ambient-glow"></div>
 
 <div class="container">
@@ -418,6 +430,126 @@
         <span>[SESSION: 24-11-2009] • SIKAR, RAJASTHAN • COMPILING FOR MEXT 2027</span>
     </footer>
 </div>
+
+<script>
+    const canvas = document.getElementById('canvas-4d');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+
+    function resize() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // 4D Hypercube (Tesseract) vertices
+    const vertices = [];
+    for (let i = 0; i < 16; i++) {
+        let x = (i & 1) ? 1 : -1;
+        let y = (i & 2) ? 1 : -1;
+        let z = (i & 4) ? 1 : -1;
+        let w = (i & 8) ? 1 : -1;
+        vertices.push([x, y, z, w]);
+    }
+
+    // Define edges (connect vertices that differ by exactly 1 coordinate)
+    const edges = [];
+    for (let i = 0; i < 16; i++) {
+        for (let j = i + 1; j < 16; j++) {
+            let diff = 0;
+            for (let k = 0; k < 4; k++) {
+                if (vertices[i][k] !== vertices[j][k]) diff++;
+            }
+            if (diff === 1) {
+                edges.push([i, j]);
+            }
+        }
+    }
+
+    let angle = 0;
+
+    function draw() {
+        ctx.clearRect(0, 0, width, height);
+        
+        angle += 0.005;
+        const projected2d = [];
+
+        // Rotation matrices in 4D (XY and XW planes)
+        for (let v of vertices) {
+            let x = v[0], y = v[1], z = v[2], w = v[3];
+
+            // Rotate XY
+            let xy_x = x * Math.cos(angle) - y * Math.sin(angle);
+            let xy_y = x * Math.sin(angle) + y * Math.cos(angle);
+            x = xy_x;
+            y = xy_y;
+
+            // Rotate XW
+            let xw_x = x * Math.cos(angle * 0.5) - w * Math.sin(angle * 0.5);
+            let xw_w = x * Math.sin(angle * 0.5) + w * Math.cos(angle * 0.5);
+            x = xw_x;
+            w = xw_w;
+
+            // Rotate ZW
+            let zw_z = z * Math.cos(angle * 0.8) - w * Math.sin(angle * 0.8);
+            let zw_w = z * Math.sin(angle * 0.8) + w * Math.cos(angle * 0.8);
+            z = zw_z;
+            w = zw_w;
+
+            // Distance for 4D -> 3D projection
+            let distance = 2.5;
+            let w_proj = 1 / (distance - w);
+            
+            // 4D -> 3D
+            let x_proj = x * w_proj;
+            let y_proj = y * w_proj;
+            let z_proj = z * w_proj;
+
+            // Distance for 3D -> 2D projection
+            let distance3d = 2.5;
+            let z_proj2d = 1 / (distance3d - z_proj);
+
+            // 3D -> 2D
+            let finalX = x_proj * z_proj2d;
+            let finalY = y_proj * z_proj2d;
+
+            // Scale to screen
+            let scale = Math.min(width, height) * 0.4;
+            projected2d.push([
+                finalX * scale + width / 2,
+                finalY * scale + height / 2
+            ]);
+        }
+
+        ctx.strokeStyle = 'rgba(59, 130, 246, 0.4)';
+        ctx.lineWidth = 1.5;
+
+        for (let edge of edges) {
+            let p1 = projected2d[edge[0]];
+            let p2 = projected2d[edge[1]];
+            
+            ctx.beginPath();
+            ctx.moveTo(p1[0], p1[1]);
+            ctx.lineTo(p2[0], p2[1]);
+            ctx.stroke();
+        }
+
+        // Add subtle nodes
+        ctx.fillStyle = 'rgba(139, 92, 246, 0.6)';
+        for (let p of projected2d) {
+            ctx.beginPath();
+            ctx.arc(p[0], p[1], 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        requestAnimationFrame(draw);
+    }
+
+    draw();
+</script>
 
 </body>
 </html>
