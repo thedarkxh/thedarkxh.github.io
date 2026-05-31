@@ -658,7 +658,7 @@
 
     // Create cloud of infinity shapes
     const shapes = [];
-    const numShapes = 30; // 30 multi-dimensional shapes
+    const numShapes = 12; // Reduced for a cleaner, professional aesthetic
 
     for (let i = 0; i < numShapes; i++) {
         // Randomly choose dimension between 3 and 6
@@ -683,7 +683,7 @@
             scale: Math.random() * 30 + 15, // size of the shape
             planes: planes,
             angle: 0,
-            baseColor: dim === 3 ? '234, 179, 8' : dim === 4 ? '249, 115, 22' : dim === 5 ? '220, 38, 38' : '153, 27, 27' // Warm colors per dimension
+            baseColor: dim === 3 ? '212, 175, 55' : dim === 4 ? '217, 119, 6' : dim === 5 ? '154, 52, 18' : '110, 36, 12' // Professional gold/bronze palette
         });
     }
 
@@ -705,7 +705,7 @@
     ];
 
     const floatingTexts = [];
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 10; i++) { // Reduced count for less clutter
         floatingTexts.push({
             text: textSnippets[Math.floor(Math.random() * textSnippets.length)],
             x: Math.random() * window.innerWidth,
@@ -713,7 +713,7 @@
             vx: (Math.random() - 0.5) * 0.4,
             vy: (Math.random() - 0.5) * 0.4,
             scale: Math.random() * 0.6 + 0.6, // 0.6 to 1.2 scale
-            color: `rgba(255, 255, 255, ${Math.random() * 0.2 + 0.1})` // faint white
+            color: `rgba(245, 240, 235, ${Math.random() * 0.2 + 0.05})` // fainter off-white
         });
     }
 
@@ -760,31 +760,33 @@
         const centerX = width / 2;
         const centerY = height / 2;
 
-        // Draw Black Hole
-        let bhGradient = ctx.createRadialGradient(centerX, centerY, 5, centerX, centerY, 200);
+        // Draw Majestic Black Hole
+        let bhGradient = ctx.createRadialGradient(centerX, centerY, 5, centerX, centerY, 250);
         bhGradient.addColorStop(0, 'rgba(0,0,0,1)');
-        bhGradient.addColorStop(0.15, 'rgba(0,0,0,1)');
-        bhGradient.addColorStop(0.3, 'rgba(249, 115, 22, 0.4)'); // Inner warm accretion disk
-        bhGradient.addColorStop(0.6, 'rgba(220, 38, 38, 0.1)');
+        bhGradient.addColorStop(0.12, 'rgba(0,0,0,1)'); // Event Horizon
+        bhGradient.addColorStop(0.18, 'rgba(217, 119, 6, 0.85)'); // Intense Photon Ring
+        bhGradient.addColorStop(0.4, 'rgba(154, 52, 18, 0.2)'); // Outer Accretion Disk
         bhGradient.addColorStop(1, 'transparent');
         
         ctx.fillStyle = bhGradient;
         ctx.beginPath();
-        ctx.arc(centerX, centerY, 200, 0, Math.PI * 2);
+        ctx.arc(centerX, centerY, 250, 0, Math.PI * 2);
         ctx.fill();
 
-        // Draw Galaxy Stars
+        // Draw Galaxy Stars with Bloom (Shadow Blur)
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = 'rgba(217, 119, 6, 0.8)';
         for (let star of stars) {
             star.angle += star.speed;
             
             let starX = centerX + Math.cos(star.angle) * star.radius;
-            let starY = centerY + Math.sin(star.angle) * star.radius * 0.6; // Elliptical tilt for 3D effect
+            let starY = centerY + Math.sin(star.angle) * star.radius * 0.5; // Flatter elliptical tilt for 3D effect
             
             // Add slight spatial warp if mouse is nearby
             let distMouseStar = Math.sqrt(Math.pow(starX - mouse.x, 2) + Math.pow(starY - mouse.y, 2));
-            if (distMouseStar < 150) {
-                starX -= (starX - mouse.x) * 0.05;
-                starY -= (starY - mouse.y) * 0.05;
+            if (distMouseStar < 200) {
+                starX -= (starX - mouse.x) * 0.08;
+                starY -= (starY - mouse.y) * 0.08;
             }
 
             ctx.fillStyle = star.color + star.alpha + ')';
@@ -792,6 +794,7 @@
             ctx.arc(starX, starY, star.size, 0, Math.PI * 2);
             ctx.fill();
         }
+        ctx.shadowBlur = 0; // Reset for rest of rendering
 
         // Reset tile target tilts and calculate mouse influence on the invisible layer
         for (let rect of tileRects) {
