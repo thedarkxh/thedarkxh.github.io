@@ -737,10 +737,10 @@
             let dyMouse = shape.y - mouse.y;
             let distMouse = Math.sqrt(dxMouse*dxMouse + dyMouse*dyMouse);
             
-            if (distMouse < 300) {
-                let force = (300 - distMouse) / 300;
-                shape.vx += (dxMouse / distMouse) * force * 1.5;
-                shape.vy += (dyMouse / distMouse) * force * 1.5;
+            if (distMouse < 120) {
+                let force = (120 - distMouse) / 120;
+                shape.vx += (dxMouse / distMouse) * force * 2.5;
+                shape.vy += (dyMouse / distMouse) * force * 2.5;
                 shape.angle += force * 0.05; // Spatial warp effect
             }
 
@@ -910,10 +910,10 @@
             let dxMouse = t.x - mouse.x;
             let dyMouse = t.y - mouse.y;
             let distMouse = Math.sqrt(dxMouse*dxMouse + dyMouse*dyMouse);
-            if (distMouse < 300) {
-                let force = (300 - distMouse) / 300;
-                t.vx += (dxMouse / distMouse) * force * 4.0; // Increased force to allow shattering
-                t.vy += (dyMouse / distMouse) * force * 4.0;
+            if (distMouse < 120) {
+                let force = (120 - distMouse) / 120;
+                t.vx += (dxMouse / distMouse) * force * 6.0; // Increased force to allow shattering with smaller radius
+                t.vy += (dyMouse / distMouse) * force * 6.0;
             }
 
             // Tile Repulsion
