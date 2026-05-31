@@ -574,14 +574,14 @@
             const y = e.clientY - rect.top;  
             const centerX = rect.width / 2;
             const centerY = rect.height / 2;
-            const rotateX = ((y - centerY) / centerY) * -12; // 12 deg max tilt
-            const rotateY = ((x - centerX) / centerX) * 12;
+            const rotateX = ((y - centerY) / centerY) * -8; // 8 deg max tilt
+            const rotateY = ((x - centerX) / centerX) * 8;
             
             card.style.transform = `translateY(-10px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
         });
 
         card.addEventListener('mouseenter', () => {
-            card.style.transition = 'none'; 
+            card.style.transition = 'transform 0.1s ease-out, box-shadow 0.1s ease-out'; 
         });
 
         card.addEventListener('mouseleave', () => {
@@ -655,8 +655,8 @@
                     fragments.push({
                         x: shape.x + (Math.random() - 0.5) * shape.scale * 2.5,
                         y: shape.y + (Math.random() - 0.5) * shape.scale * 2.5,
-                        vx: shape.vx + (Math.random() - 0.5) * 6,
-                        vy: shape.vy + (Math.random() - 0.5) * 6,
+                        vx: (shape.vx * 0.5) + (Math.random() - 0.5) * 2,
+                        vy: (shape.vy * 0.5) + (Math.random() - 0.5) * 2,
                         color: shape.baseColor,
                         life: 1.0
                     });
@@ -765,19 +765,25 @@
             let fdy = centerY - f.y;
             let fdist = Math.sqrt(fdx*fdx + fdy*fdy);
             
-            let fgrav = 2000 / (fdist * fdist);
-            if(fgrav > 10) fgrav = 10;
+            // Strong pull to center to ensure they go inside the black hole
+            let pullForce = 8;
+            f.vx += (fdx / fdist) * pullForce;
+            f.vy += (fdy / fdist) * pullForce;
             
             // Spiraling effect (tangent velocity)
             let tangentX = -fdy / fdist;
             let tangentY = fdx / fdist;
             
-            f.vx += (fdx / fdist) * fgrav + tangentX * 0.9;
-            f.vy += (fdy / fdist) * fgrav + tangentY * 0.9;
+            f.vx += tangentX * 2.5;
+            f.vy += tangentY * 2.5;
+
+            // Friction to prevent orbiting forever and force sucking in
+            f.vx *= 0.85;
+            f.vy *= 0.85;
             
             f.x += f.vx;
             f.y += f.vy;
-            f.life -= 0.015; 
+            f.life -= 0.02; 
             
             ctx.fillStyle = `rgba(${f.color}, ${f.life})`;
             ctx.beginPath();
