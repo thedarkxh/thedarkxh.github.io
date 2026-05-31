@@ -58,6 +58,23 @@
             pointer-events: none;
         }
 
+        .profile-img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+            margin-bottom: 20px;
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .profile-img:hover {
+            transform: scale(1.05) rotateZ(3deg);
+            box-shadow: 0 15px 40px rgba(139, 92, 246, 0.6);
+            border-color: rgba(139, 92, 246, 0.5);
+        }
+
         /* Ambient Glow */
         .ambient-glow {
             position: fixed;
@@ -351,6 +368,7 @@
 
 <div class="container">
     <header>
+        <img src="profile.jpg" alt="Samar Aditya" class="profile-img">
         <h1>SAMAR ADITYA</h1>
         <div class="status-bar">
             Systems Engineering • Computational Physics • National Athlete
@@ -374,6 +392,28 @@
             </div>
         </div>
     </header>
+
+    <section id="education">
+        <h2><i class="fas fa-graduation-cap"></i> Educational Background</h2>
+        <div class="grid-cards">
+            <div class="project-card">
+                <div class="project-title"><i class="fas fa-school"></i> Navjeevan CBSE Academy</div>
+                <div class="badges">
+                    <span class="badge">Senior Secondary</span>
+                    <span class="badge">2025 - 2027</span>
+                </div>
+                <p>Currently enrolled, focusing on Sciences and Mathematics to prepare for rigorous engineering programs.</p>
+            </div>
+            <div class="project-card">
+                <div class="project-title"><i class="fas fa-school"></i> St. Mary Sr. Sec. School</div>
+                <div class="badges">
+                    <span class="badge">Secondary (ICSE)</span>
+                    <span class="badge">2017 - 2025</span>
+                </div>
+                <p>Built foundational knowledge in physical sciences, while self-teaching Python automation and developing hardware projects like a Plasma Generator and Tesla Coil.</p>
+            </div>
+        </div>
+    </section>
 
     <section id="engineering">
         <h2><i class="fas fa-layer-group"></i> Core Systems Portfolio</h2>
@@ -511,6 +551,20 @@
         v[axis2] = a1 * Math.sin(angle) + a2 * Math.cos(angle);
     }
 
+    let mouse = { x: -1000, y: -1000 };
+    window.addEventListener('mousemove', (e) => {
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+    });
+    
+    // Touch support for mobile
+    window.addEventListener('touchmove', (e) => {
+        if(e.touches.length > 0) {
+            mouse.x = e.touches[0].clientX;
+            mouse.y = e.touches[0].clientY;
+        }
+    });
+
     // Create cloud of infinity shapes
     const shapes = [];
     const numShapes = 30; // 30 multi-dimensional shapes
@@ -546,6 +600,26 @@
         ctx.clearRect(0, 0, width, height);
 
         for (let shape of shapes) {
+            // Mouse Repulsion (Curvature Point)
+            let dx = shape.x - mouse.x;
+            let dy = shape.y - mouse.y;
+            let dist = Math.sqrt(dx*dx + dy*dy);
+            
+            if (dist < 300) {
+                let force = (300 - dist) / 300;
+                shape.vx += (dx / dist) * force * 1.5;
+                shape.vy += (dy / dist) * force * 1.5;
+                shape.angle += force * 0.05; // Spatial warp effect
+            }
+
+            // Friction to slow down repulsion smoothly
+            shape.vx *= 0.96;
+            shape.vy *= 0.96;
+
+            // Maintain drifting momentum
+            if (Math.abs(shape.vx) < 0.2) shape.vx += (Math.random() - 0.5) * 0.15;
+            if (Math.abs(shape.vy) < 0.2) shape.vy += (Math.random() - 0.5) * 0.15;
+
             // Move shape
             shape.x += shape.vx;
             shape.y += shape.vy;
