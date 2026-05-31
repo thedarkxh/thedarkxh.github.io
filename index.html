@@ -757,6 +757,24 @@
         });
     }
 
+    // Initialize Nebula Clouds (Volumetric Gas)
+    const nebulaClouds = [];
+    for (let i = 0; i < 20; i++) {
+        nebulaClouds.push({
+            angle: Math.random() * Math.PI * 2,
+            radius: Math.random() * 180, // Spread around the center
+            speed: (Math.random() - 0.5) * 0.003, // Slow drift
+            size: Math.random() * 250 + 150, // Massive clouds
+            color: [
+                'rgba(217, 119, 6, ', // Amber
+                'rgba(154, 52, 18, ', // Bronze
+                'rgba(212, 175, 55, ', // Gold
+                'rgba(110, 36, 12, '   // Dark Warm Brown
+            ][Math.floor(Math.random() * 4)],
+            alpha: Math.random() * 0.15 + 0.05
+        });
+    }
+
     function draw() {
         ctx.clearRect(0, 0, width, height);
 
@@ -798,20 +816,43 @@
         // 1. Render Back Stars
         renderStars(false);
 
-        // 2. Draw Majestic Black Hole (Obscures the back stars)
-        let bhGradient = ctx.createRadialGradient(centerX, centerY, 5, centerX, centerY, 250);
-        bhGradient.addColorStop(0, 'rgba(0,0,0,1)');
-        bhGradient.addColorStop(0.12, 'rgba(0,0,0,1)'); // Solid Event Horizon
-        bhGradient.addColorStop(0.18, 'rgba(217, 119, 6, 0.85)'); // Intense Photon Ring
-        bhGradient.addColorStop(0.4, 'rgba(154, 52, 18, 0.2)'); // Outer Accretion Disk
-        bhGradient.addColorStop(1, 'transparent');
-        
-        ctx.fillStyle = bhGradient;
+        // 2. Draw Volumetric Nebula (Replaces Black Hole)
+        for (let cloud of nebulaClouds) {
+            cloud.angle += cloud.speed;
+            
+            // Orbit the center slowly
+            let cx = centerX + Math.cos(cloud.angle) * cloud.radius;
+            let cy = centerY + Math.sin(cloud.angle) * cloud.radius * 0.6; // 3D tilt
+            
+            // Subtle spatial drag from mouse
+            let distMouseCloud = Math.sqrt(Math.pow(cx - mouse.x, 2) + Math.pow(cy - mouse.y, 2));
+            if (distMouseCloud < 250) {
+                cx -= (cx - mouse.x) * 0.03;
+                cy -= (cy - mouse.y) * 0.03;
+            }
+            
+            let nGradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, cloud.size);
+            nGradient.addColorStop(0, cloud.color + cloud.alpha + ')');
+            nGradient.addColorStop(0.5, cloud.color + (cloud.alpha * 0.5) + ')');
+            nGradient.addColorStop(1, 'transparent');
+            
+            ctx.fillStyle = nGradient;
+            ctx.beginPath();
+            ctx.arc(cx, cy, cloud.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Central Bright Core (Starbirth region of the Nebula)
+        let coreGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 180);
+        coreGradient.addColorStop(0, 'rgba(255, 245, 230, 0.9)'); // Bright hot core
+        coreGradient.addColorStop(0.15, 'rgba(217, 119, 6, 0.6)'); // Amber halo
+        coreGradient.addColorStop(1, 'transparent');
+        ctx.fillStyle = coreGradient;
         ctx.beginPath();
-        ctx.arc(centerX, centerY, 250, 0, Math.PI * 2);
+        ctx.arc(centerX, centerY, 180, 0, Math.PI * 2);
         ctx.fill();
 
-        // 3. Render Front Stars (Passes over the black hole)
+        // 3. Render Front Stars (Passes over the Nebula)
         renderStars(true);
 
         // Reset tile target tilts and calculate mouse influence on the invisible layer
@@ -831,13 +872,14 @@
         }
 
         for (let shape of shapes) {
-            // Distance to Black Hole
+            // Distance to Nebula Core
             let dxBH = centerX - shape.x;
             let dyBH = centerY - shape.y;
             let distBH = Math.sqrt(dxBH*dxBH + dyBH*dyBH);
 
             if (distBH < eventHorizon) {
-                // Spaghettification! Break into fragments
+                // Break apart into fragments due to intense heat/density of the nebula
+
                 for (let j = 0; j < 40; j++) {
                     fragments.push({
                         x: shape.x + (Math.random() - 0.5) * shape.scale * 2.5,
@@ -862,7 +904,7 @@
                 continue; // Skip rendering the hypercube this frame
             }
 
-            // Apply Black Hole Gravity
+            // Apply Nebula Gravity
             let gravity = 1000 / (distBH * distBH); 
             if (gravity > 2.0) gravity = 2.0; // Cap to avoid teleporting
             shape.vx += (dxBH / distBH) * gravity;
@@ -970,7 +1012,7 @@
             let fdy = centerY - f.y;
             let fdist = Math.sqrt(fdx*fdx + fdy*fdy);
             
-            // Strong pull to center to ensure they go inside the black hole
+            // Strong pull to center to ensure they are absorbed by the nebula core
             let pullForce = 8;
             f.vx += (fdx / fdist) * pullForce;
             f.vy += (fdy / fdist) * pullForce;
@@ -995,7 +1037,7 @@
             ctx.arc(f.x, f.y, 1.5, 0, Math.PI * 2);
             ctx.fill();
             
-            // Remove when dead or sucked into singularity
+            // Remove when dead or absorbed by the nebula core
             if (f.life <= 0 || fdist < 10) {
                 fragments.splice(i, 1);
             }
@@ -1011,7 +1053,7 @@
             let distBH = Math.sqrt(dxBH*dxBH + dyBH*dyBH);
 
             if (distBH < eventHorizon) {
-                // Spaghettification fragments for text
+                // Thermal disintegration of text inside the nebula core
                 for (let j = 0; j < 5; j++) {
                     fragments.push({
                         x: t.x + (Math.random() - 0.5) * 15,
