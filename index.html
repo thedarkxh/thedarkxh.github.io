@@ -819,8 +819,9 @@
         // 1. Render Back Stars
         renderStars(false);
 
-        // Update GRB Angle
-        grbAngle += 0.01; // Extremely fast, energetic spin of the hypernova core
+        // Update GRB Pulsar Effect
+        let grbAngle = Math.PI / 2; // Fixed straight up and down
+        let flashPulse = 0.7 + 0.3 * Math.sin(Date.now() * 0.015); // Rapid pulsar flicker
 
         // Draw Expanding Hypernova Shockwave
         shockwaveRadius += 6.0; // Fast expanding shockwave
@@ -828,43 +829,57 @@
             shockwaveRadius = 0; // Reset
         }
         ctx.shadowBlur = 40;
-        ctx.shadowColor = 'rgba(217, 119, 6, 0.8)';
-        ctx.strokeStyle = `rgba(249, 115, 22, ${Math.max(0, 0.8 - (shockwaveRadius / width))})`;
+        ctx.shadowColor = `rgba(217, 119, 6, ${0.8 * flashPulse})`;
+        ctx.strokeStyle = `rgba(249, 115, 22, ${Math.max(0, 0.8 * flashPulse - (shockwaveRadius / width))})`;
         ctx.lineWidth = 4;
         ctx.beginPath();
         ctx.arc(centerX, centerY, shockwaveRadius, 0, Math.PI * 2);
         ctx.stroke();
 
         // Draw Gamma Ray Burst Beams (Background Layer)
-        ctx.shadowBlur = 50;
+        ctx.shadowBlur = 50 * flashPulse;
         ctx.shadowColor = 'rgba(255, 245, 230, 0.9)';
         
-        // Beam 1
-        let beamGradient1 = ctx.createLinearGradient(centerX, centerY, centerX + Math.cos(grbAngle) * width, centerY + Math.sin(grbAngle) * width);
-        beamGradient1.addColorStop(0, 'rgba(255, 255, 255, 1)');
-        beamGradient1.addColorStop(0.2, 'rgba(217, 119, 6, 0.6)');
+        // Vertical Beam 1 (Top)
+        let beamGradient1 = ctx.createLinearGradient(centerX, centerY, centerX + Math.cos(grbAngle) * height, centerY + Math.sin(grbAngle) * height);
+        beamGradient1.addColorStop(0, `rgba(255, 255, 255, ${0.9 * flashPulse})`);
+        beamGradient1.addColorStop(0.15, `rgba(217, 119, 6, ${0.6 * flashPulse})`);
         beamGradient1.addColorStop(1, 'transparent');
         
         ctx.fillStyle = beamGradient1;
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
-        ctx.lineTo(centerX + Math.cos(grbAngle - 0.15) * width, centerY + Math.sin(grbAngle - 0.15) * width);
-        ctx.lineTo(centerX + Math.cos(grbAngle + 0.15) * width, centerY + Math.sin(grbAngle + 0.15) * width);
+        ctx.lineTo(centerX + Math.cos(grbAngle - 0.08) * height, centerY + Math.sin(grbAngle - 0.08) * height);
+        ctx.lineTo(centerX + Math.cos(grbAngle + 0.08) * height, centerY + Math.sin(grbAngle + 0.08) * height);
         ctx.closePath();
         ctx.fill();
 
-        // Beam 2 (Opposite pole)
-        let beamGradient2 = ctx.createLinearGradient(centerX, centerY, centerX + Math.cos(grbAngle + Math.PI) * width, centerY + Math.sin(grbAngle + Math.PI) * width);
-        beamGradient2.addColorStop(0, 'rgba(255, 255, 255, 1)');
-        beamGradient2.addColorStop(0.2, 'rgba(217, 119, 6, 0.6)');
+        // Vertical Beam 2 (Bottom)
+        let beamGradient2 = ctx.createLinearGradient(centerX, centerY, centerX + Math.cos(grbAngle + Math.PI) * height, centerY + Math.sin(grbAngle + Math.PI) * height);
+        beamGradient2.addColorStop(0, `rgba(255, 255, 255, ${0.9 * flashPulse})`);
+        beamGradient2.addColorStop(0.15, `rgba(217, 119, 6, ${0.6 * flashPulse})`);
         beamGradient2.addColorStop(1, 'transparent');
 
         ctx.fillStyle = beamGradient2;
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
-        ctx.lineTo(centerX + Math.cos(grbAngle + Math.PI - 0.15) * width, centerY + Math.sin(grbAngle + Math.PI - 0.15) * width);
-        ctx.lineTo(centerX + Math.cos(grbAngle + Math.PI + 0.15) * width, centerY + Math.sin(grbAngle + Math.PI + 0.15) * width);
+        ctx.lineTo(centerX + Math.cos(grbAngle + Math.PI - 0.08) * height, centerY + Math.sin(grbAngle + Math.PI - 0.08) * height);
+        ctx.lineTo(centerX + Math.cos(grbAngle + Math.PI + 0.08) * height, centerY + Math.sin(grbAngle + Math.PI + 0.08) * height);
         ctx.closePath();
+        ctx.fill();
+
+        // Horizontal Lens Flare (Diffraction Spike for real space photo look)
+        let flareWidth = width * 0.8;
+        let flareGradient = ctx.createLinearGradient(centerX - flareWidth/2, centerY, centerX + flareWidth/2, centerY);
+        flareGradient.addColorStop(0, 'transparent');
+        flareGradient.addColorStop(0.4, `rgba(217, 119, 6, ${0.3 * flashPulse})`);
+        flareGradient.addColorStop(0.5, `rgba(255, 255, 255, ${0.9 * flashPulse})`);
+        flareGradient.addColorStop(0.6, `rgba(217, 119, 6, ${0.3 * flashPulse})`);
+        flareGradient.addColorStop(1, 'transparent');
+        
+        ctx.fillStyle = flareGradient;
+        ctx.beginPath();
+        ctx.ellipse(centerX, centerY, flareWidth/2, 2 * flashPulse, 0, 0, Math.PI * 2);
         ctx.fill();
         
         ctx.shadowBlur = 0; // Reset for clouds
@@ -934,18 +949,18 @@
             let dyBH = centerY - shape.y;
             let distBH = Math.sqrt(dxBH*dxBH + dyBH*dyBH);
 
-            // Gamma Ray Burst Interaction (Blow objects away if they cross the beam)
+            // Gamma Ray Burst Interaction (Blow objects away horizontally if they cross the vertical beam)
             let shapeAngle = Math.atan2(dyBH, dxBH);
-            let angleDiff1 = Math.abs(shapeAngle - (grbAngle % (Math.PI*2)));
-            let angleDiff2 = Math.abs(shapeAngle - ((grbAngle + Math.PI) % (Math.PI*2)));
+            let angleDiff1 = Math.abs(shapeAngle - (Math.PI / 2));
+            let angleDiff2 = Math.abs(shapeAngle - (-Math.PI / 2));
             // Normalize angles
             if (angleDiff1 > Math.PI) angleDiff1 = Math.PI * 2 - angleDiff1;
             if (angleDiff2 > Math.PI) angleDiff2 = Math.PI * 2 - angleDiff2;
             
-            if (angleDiff1 < 0.1 || angleDiff2 < 0.1) {
-                // Ejected by relativistic jets!
-                shape.vx += (dxBH / distBH) * 8.0;
-                shape.vy += (dyBH / distBH) * 8.0;
+            if (angleDiff1 < 0.15 || angleDiff2 < 0.15) {
+                // Ejected horizontally by relativistic jets!
+                shape.vx += (dxBH > 0 ? 1 : -1) * 8.0;
+                shape.vy += (dyBH > 0 ? 1 : -1) * 2.0;
                 shape.angle += 0.5; // Chaotic tumbling
             }
 
