@@ -757,14 +757,14 @@
         });
     }
 
-    // Initialize Supernova Remnant Clouds
+    // Initialize Hypernova Remnant Clouds
     const nebulaClouds = [];
-    for (let i = 0; i < 30; i++) { // Massive expanding gas cloud
+    for (let i = 0; i < 40; i++) { // Massive expanding gas clouds
         nebulaClouds.push({
             angle: Math.random() * Math.PI * 2,
-            radius: Math.random() * 200, // Spread around the central star
-            speed: (Math.random() - 0.5) * 0.005, // Swirl speed
-            size: Math.random() * 250 + 150, // Massive clouds
+            radius: Math.random() * 300, // Massive spread around the central star
+            speed: (Math.random() - 0.5) * 0.015, // Violent hypernova swirl speed
+            size: Math.random() * 350 + 200, // Gargantuan clouds
             color: [
                 'rgba(217, 119, 6, ', // Amber
                 'rgba(154, 52, 18, ', // Bronze
@@ -776,6 +776,7 @@
     }
 
     let grbAngle = 0; // Tracks the rotation of the Gamma Ray Burst beams
+    let shockwaveRadius = 0; // Tracks the expanding hypernova shockwave
 
     function draw() {
         ctx.clearRect(0, 0, width, height);
@@ -819,37 +820,50 @@
         renderStars(false);
 
         // Update GRB Angle
-        grbAngle += 0.005; // Fast, energetic spin of the neutron star
+        grbAngle += 0.01; // Extremely fast, energetic spin of the hypernova core
+
+        // Draw Expanding Hypernova Shockwave
+        shockwaveRadius += 6.0; // Fast expanding shockwave
+        if (shockwaveRadius > width * 1.5) {
+            shockwaveRadius = 0; // Reset
+        }
+        ctx.shadowBlur = 40;
+        ctx.shadowColor = 'rgba(217, 119, 6, 0.8)';
+        ctx.strokeStyle = `rgba(249, 115, 22, ${Math.max(0, 0.8 - (shockwaveRadius / width))})`;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, shockwaveRadius, 0, Math.PI * 2);
+        ctx.stroke();
 
         // Draw Gamma Ray Burst Beams (Background Layer)
-        ctx.shadowBlur = 30;
-        ctx.shadowColor = 'rgba(255, 245, 230, 0.8)';
+        ctx.shadowBlur = 50;
+        ctx.shadowColor = 'rgba(255, 245, 230, 0.9)';
         
         // Beam 1
         let beamGradient1 = ctx.createLinearGradient(centerX, centerY, centerX + Math.cos(grbAngle) * width, centerY + Math.sin(grbAngle) * width);
-        beamGradient1.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
-        beamGradient1.addColorStop(0.2, 'rgba(217, 119, 6, 0.4)');
+        beamGradient1.addColorStop(0, 'rgba(255, 255, 255, 1)');
+        beamGradient1.addColorStop(0.2, 'rgba(217, 119, 6, 0.6)');
         beamGradient1.addColorStop(1, 'transparent');
         
         ctx.fillStyle = beamGradient1;
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
-        ctx.lineTo(centerX + Math.cos(grbAngle - 0.08) * width, centerY + Math.sin(grbAngle - 0.08) * width);
-        ctx.lineTo(centerX + Math.cos(grbAngle + 0.08) * width, centerY + Math.sin(grbAngle + 0.08) * width);
+        ctx.lineTo(centerX + Math.cos(grbAngle - 0.15) * width, centerY + Math.sin(grbAngle - 0.15) * width);
+        ctx.lineTo(centerX + Math.cos(grbAngle + 0.15) * width, centerY + Math.sin(grbAngle + 0.15) * width);
         ctx.closePath();
         ctx.fill();
 
         // Beam 2 (Opposite pole)
         let beamGradient2 = ctx.createLinearGradient(centerX, centerY, centerX + Math.cos(grbAngle + Math.PI) * width, centerY + Math.sin(grbAngle + Math.PI) * width);
-        beamGradient2.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
-        beamGradient2.addColorStop(0.2, 'rgba(217, 119, 6, 0.4)');
+        beamGradient2.addColorStop(0, 'rgba(255, 255, 255, 1)');
+        beamGradient2.addColorStop(0.2, 'rgba(217, 119, 6, 0.6)');
         beamGradient2.addColorStop(1, 'transparent');
 
         ctx.fillStyle = beamGradient2;
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
-        ctx.lineTo(centerX + Math.cos(grbAngle + Math.PI - 0.08) * width, centerY + Math.sin(grbAngle + Math.PI - 0.08) * width);
-        ctx.lineTo(centerX + Math.cos(grbAngle + Math.PI + 0.08) * width, centerY + Math.sin(grbAngle + Math.PI + 0.08) * width);
+        ctx.lineTo(centerX + Math.cos(grbAngle + Math.PI - 0.15) * width, centerY + Math.sin(grbAngle + Math.PI - 0.15) * width);
+        ctx.lineTo(centerX + Math.cos(grbAngle + Math.PI + 0.15) * width, centerY + Math.sin(grbAngle + Math.PI + 0.15) * width);
         ctx.closePath();
         ctx.fill();
         
@@ -880,17 +894,18 @@
             ctx.fill();
         }
 
-        // Neutron Star Core
-        ctx.shadowBlur = 50;
+        // Hypernova Neutron Star Core
+        ctx.shadowBlur = 80;
         ctx.shadowColor = 'rgba(255, 255, 255, 1)';
-        let nsGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 150);
+        let nsGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 220);
         nsGradient.addColorStop(0, 'rgba(255, 255, 255, 1)'); // Dense Neutron Core
-        nsGradient.addColorStop(0.05, 'rgba(255, 245, 230, 0.9)'); // High energy plasma
-        nsGradient.addColorStop(0.2, 'rgba(217, 119, 6, 0.6)'); // Amber shockwave
+        nsGradient.addColorStop(0.1, 'rgba(255, 245, 230, 0.9)'); // High energy plasma
+        nsGradient.addColorStop(0.3, 'rgba(217, 119, 6, 0.8)'); // Amber explosion
+        nsGradient.addColorStop(0.7, 'rgba(220, 38, 38, 0.3)'); // Supernova blast edge
         nsGradient.addColorStop(1, 'transparent');
         ctx.fillStyle = nsGradient;
         ctx.beginPath();
-        ctx.arc(centerX, centerY, 150, 0, Math.PI * 2);
+        ctx.arc(centerX, centerY, 220, 0, Math.PI * 2);
         ctx.fill();
         ctx.shadowBlur = 0;
 
