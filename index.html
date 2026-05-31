@@ -643,19 +643,30 @@
         v[axis2] = a1 * Math.sin(angle) + a2 * Math.cos(angle);
     }
 
+    let isTouch = false;
     let mouse = { x: -1000, y: -1000 };
     window.addEventListener('mousemove', (e) => {
+        isTouch = false;
         mouse.x = e.clientX;
         mouse.y = e.clientY;
     });
     
-    // Touch support for mobile
-    window.addEventListener('touchmove', (e) => {
+    // Touch support for mobile (with passive flag for smooth scrolling)
+    window.addEventListener('touchstart', (e) => {
+        isTouch = true;
         if(e.touches.length > 0) {
             mouse.x = e.touches[0].clientX;
             mouse.y = e.touches[0].clientY;
         }
-    });
+    }, {passive: true});
+
+    window.addEventListener('touchmove', (e) => {
+        isTouch = true;
+        if(e.touches.length > 0) {
+            mouse.x = e.touches[0].clientX;
+            mouse.y = e.touches[0].clientY;
+        }
+    }, {passive: true});
 
     // 3D Parallax Tilt logic moved to physics engine loop to combine forces
 
@@ -937,7 +948,7 @@
             let distMouseTile = Math.sqrt(dxMouseTile*dxMouseTile + dyMouseTile*dyMouseTile);
             
             // If mouse is inside the invisible layer, tilt the tile
-            if (distMouseTile < rect.radius) {
+            if (!isTouch && distMouseTile < rect.radius) {
                 rect.targetTiltX = (dyMouseTile / (rect.height / 2)) * -8;
                 rect.targetTiltY = (dxMouseTile / (rect.width / 2)) * 8;
             }
@@ -1022,8 +1033,10 @@
                     shape.angle += force * 0.05; // Spatial warp effect
 
                     // Shape impacting the invisible layer physically tilts the tile!
-                    rect.targetTiltX += (dyTile / (rect.height / 2)) * force * -6;
-                    rect.targetTiltY += (dxTile / (rect.width / 2)) * force * 6;
+                    if (!isTouch) {
+                        rect.targetTiltX += (dyTile / (rect.height / 2)) * force * -6;
+                        rect.targetTiltY += (dxTile / (rect.width / 2)) * force * 6;
+                    }
                 }
             }
 
