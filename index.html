@@ -174,6 +174,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
             gap: 30px;
+            perspective: 1200px;
         }
 
         /* Glassmorphism Cards */
@@ -184,11 +185,18 @@
             padding: 30px;
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
             position: relative;
-            overflow: hidden;
+            /* removed overflow: hidden to allow 3D pop out */
             display: flex;
             flex-direction: column;
+            transform-style: preserve-3d;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .project-card > * {
+            transform: translateZ(30px);
+            transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
         }
 
         .project-card::before {
@@ -205,9 +213,13 @@
         }
 
         .project-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            border-color: rgba(139, 92, 246, 0.3);
+            transform: translateY(-10px) rotateX(6deg) rotateY(-6deg);
+            box-shadow: -20px 25px 50px rgba(0, 0, 0, 0.5);
+            border-color: rgba(139, 92, 246, 0.5);
+        }
+
+        .project-card:hover > * {
+            transform: translateZ(50px);
         }
 
         .project-card:hover::before {
@@ -409,6 +421,25 @@
                 </div>
                 <p>Simulation of particle mechanics and projectile motion in a 3D environment, applying core physics principles to real-time computational models.</p>
                 <a href="https://github.com/thedarkxh/Physics-Engine-3D/" class="repo-link" target="_blank">View Repository <i class="fas fa-arrow-right"></i></a>
+            </div>
+        </div>
+    </section>
+
+    <section id="academic-objectives">
+        <h2><i class="fas fa-university"></i> Academic Objectives</h2>
+        <div class="grid-cards" style="grid-template-columns: 1fr;">
+            <div class="project-card" style="background: linear-gradient(to bottom right, var(--glass-bg), rgba(88, 28, 135, 0.3));">
+                <div class="project-title"><i class="fas fa-microscope"></i> Research Goals & MEXT 2027</div>
+                <div class="badges">
+                    <span class="badge physics">Quantum Mechanics</span>
+                    <span class="badge physics">Cosmology</span>
+                    <span class="badge math">Thermodynamics</span>
+                    <span class="badge math">Electrostatics</span>
+                </div>
+                <p>Deeply passionate about the <strong>Pauli Exclusion Principle</strong> and its underlying quantum frameworks. Actively preparing for the MEXT Undergraduate Scholarship to pursue advanced systems and physics research in Japan.</p>
+                <div class="rank-highlight" style="margin-top: 15px;">
+                    <strong>Target Universities:</strong> Tokyo Institute of Technology (Tokyo Tech) • Kyoto University
+                </div>
             </div>
         </div>
     </section>
