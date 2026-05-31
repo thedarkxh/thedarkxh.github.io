@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+    <defs>
+        <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#f97316"/>
+            <stop offset="50%" stop-color="#b91c1c"/>
+            <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="blur">
+            <feGaussianBlur stdDeviation="3"/>
+        </filter>
+    </defs>
+    <!-- Background Space / Tile -->
+    <rect width="100" height="100" rx="25" fill="#170d08" />
+    
+    <!-- Glowing Accretion Disk -->
+    <circle cx="50" cy="50" r="40" fill="url(#glow)" filter="url(#blur)"/>
+    
+    <!-- Multi-dimensional Orbiting rings -->
+    <ellipse cx="50" cy="50" rx="38" ry="10" fill="none" stroke="#fbd38d" stroke-width="2.5" opacity="0.8" transform="rotate(30 50 50)"/>
+    <ellipse cx="50" cy="50" rx="38" ry="10" fill="none" stroke="#f97316" stroke-width="2.5" opacity="0.8" transform="rotate(-30 50 50)"/>
+    
+    <!-- Singularity (Black Hole) -->
+    <circle cx="50" cy="50" r="16" fill="#000000"/>
+    
+    <!-- Singularity Event Horizon glow -->
+    <circle cx="50" cy="50" r="16" fill="none" stroke="#ea580c" stroke-width="1.5" opacity="0.9"/>
+</svg>
