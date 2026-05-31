@@ -740,6 +740,20 @@
     window.addEventListener('resize', updateTileRects);
     setTimeout(updateTileRects, 100); // Initialize after layout
 
+    // Initialize Galaxy Stars
+    const stars = [];
+    for (let i = 0; i < 400; i++) {
+        let radius = Math.random() * (window.innerWidth * 0.8);
+        stars.push({
+            angle: Math.random() * Math.PI * 2,
+            radius: radius,
+            speed: (Math.random() * 0.8 + 0.2) / Math.max(radius, 50), // Keplerian orbit (faster inside)
+            size: Math.random() * 1.5 + 0.5,
+            color: Math.random() > 0.7 ? 'rgba(217, 119, 6, ' : 'rgba(255, 255, 255, ',
+            alpha: Math.random() * 0.6 + 0.1
+        });
+    }
+
     function draw() {
         ctx.clearRect(0, 0, width, height);
 
@@ -758,6 +772,26 @@
         ctx.beginPath();
         ctx.arc(centerX, centerY, 200, 0, Math.PI * 2);
         ctx.fill();
+
+        // Draw Galaxy Stars
+        for (let star of stars) {
+            star.angle += star.speed;
+            
+            let starX = centerX + Math.cos(star.angle) * star.radius;
+            let starY = centerY + Math.sin(star.angle) * star.radius * 0.6; // Elliptical tilt for 3D effect
+            
+            // Add slight spatial warp if mouse is nearby
+            let distMouseStar = Math.sqrt(Math.pow(starX - mouse.x, 2) + Math.pow(starY - mouse.y, 2));
+            if (distMouseStar < 150) {
+                starX -= (starX - mouse.x) * 0.05;
+                starY -= (starY - mouse.y) * 0.05;
+            }
+
+            ctx.fillStyle = star.color + star.alpha + ')';
+            ctx.beginPath();
+            ctx.arc(starX, starY, star.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
 
         // Reset tile target tilts and calculate mouse influence on the invisible layer
         for (let rect of tileRects) {
