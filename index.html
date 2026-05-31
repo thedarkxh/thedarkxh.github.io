@@ -247,6 +247,7 @@
             border-radius: 20px;
             pointer-events: none;
             opacity: 0.9;
+            transform: translateZ(0) !important; /* Keep it flat on the card background */
         }
 
         .project-card:hover {
@@ -892,9 +893,9 @@
             infected = true;
             card.classList.add('infected');
 
-            const rect = card.getBoundingClientRect();
-            vCanvas.width = rect.width;
-            vCanvas.height = rect.height;
+            // Use offsetWidth instead of getBoundingClientRect to avoid 3D transform scaling issues
+            vCanvas.width = card.offsetWidth;
+            vCanvas.height = card.offsetHeight;
             const vCtx = vCanvas.getContext('2d');
 
             let veins = [];
@@ -917,7 +918,7 @@
                     vx: (Math.random() - 0.5) * 1.5,
                     vy: Math.random() * 1.5 + 0.5, // moving downwards
                     thickness: Math.random() * 2 + 1.5,
-                    color: Math.random() > 0.3 ? '220, 38, 38' : '249, 115, 22' // Red or Orange
+                    color: Math.random() > 0.5 ? '168, 85, 247' : '147, 51, 234' // Toxic Purple hues
                 });
                 spawnCount++;
             }, 1500 / maxSpawns);
