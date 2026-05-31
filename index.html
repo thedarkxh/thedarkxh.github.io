@@ -624,6 +624,22 @@
     const fragments = []; // Array to store breaking pieces
     const eventHorizon = 120; // Black hole capture radius
 
+    // Tile Invisible Borders (Repulsion Fields)
+    let tileRects = [];
+    function updateTileRects() {
+        tileRects = Array.from(document.querySelectorAll('.project-card')).map(el => {
+            let rect = el.getBoundingClientRect();
+            return {
+                x: rect.left + rect.width / 2,
+                y: rect.top + rect.height / 2,
+                radius: Math.max(rect.width, rect.height) / 2 + 50 // 50px invisible border padding
+            };
+        });
+    }
+    window.addEventListener('scroll', updateTileRects);
+    window.addEventListener('resize', updateTileRects);
+    setTimeout(updateTileRects, 100); // Initialize after layout
+
     function draw() {
         ctx.clearRect(0, 0, width, height);
 
@@ -691,6 +707,20 @@
                 shape.vx += (dxMouse / distMouse) * force * 1.5;
                 shape.vy += (dyMouse / distMouse) * force * 1.5;
                 shape.angle += force * 0.05; // Spatial warp effect
+            }
+
+            // Tile Repulsion (Invisible border behind tiles)
+            for (let rect of tileRects) {
+                let dxTile = shape.x - rect.x;
+                let dyTile = shape.y - rect.y;
+                let distTile = Math.sqrt(dxTile*dxTile + dyTile*dyTile);
+                
+                if (distTile < rect.radius) {
+                    let force = (rect.radius - distTile) / rect.radius;
+                    shape.vx += (dxTile / distTile) * force * 2.0;
+                    shape.vy += (dyTile / distTile) * force * 2.0;
+                    shape.angle += force * 0.05; // Spatial warp effect
+                }
             }
 
             // Friction to slow down repulsion smoothly
