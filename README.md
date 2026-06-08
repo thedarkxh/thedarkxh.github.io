@@ -37,6 +37,8 @@ I am a Class 12 student currently undergoing intensive academic training at **Al
 ---
 ### 🚀 Live Projects
 
+**[Orbital Command](https://thedarkxh.github.io/orbital-command/)** - A high-performance 3D Earth tracking engine rendering 10,000+ live satellites. Features real-time TLE orbital mechanics, pass predictions, and simulated telemetry intercepts.
+
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://samar-math-logic.streamlit.app/)
 **[Math Logic Solver]** - A symbolic computation engine for JEE and EJU calculus.
 ---
