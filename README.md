@@ -1,13 +1,13 @@
 # Hi there, I'm Samar! 👋
  
-### 🎓 Engineering Aspirant | Aspiring MEXT Scholar | JEE Candidate
+### 🎓 Engineering Aspirant | JEE Candidate
 I am a Class 12 student currently undergoing intensive academic training at **Allen Career Institute, Sikar**. My work focuses on bridging the gap between competitive engineering fundamentals and real-world computational applications.
 
 ---
 
 ## 🚀 About Me
 - 🔭 **Current Focus:** Mastering JEE Physics, Taking part in Cultural Exchange, and Organic Chemistry for JEE (Advanced).
-- 🇯🇵 **Goal:** Pursuing an Undergraduate degree in Engineering in Japan via the **MEXT Scholarship**.
+- 🇯🇵 **Goal:** Pursuing an Undergraduate degree in Engineering in Japan.
 - 💻 **Tech Interests:** Robotics, AI, Electronics, and Computational Physics.
 - 📚 **Learning:** Japanese (日本語) - currently at an introductory level.
 
