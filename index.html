@@ -625,14 +625,56 @@
     const ctx = canvas.getContext('2d');
     let width, height;
 
-    function resize() {
-        width = window.innerWidth;
-        height = window.innerHeight;
-        canvas.width = width;
-        canvas.height = height;
+    // --- Performance Optimization Framework ---
+    const PROFILE = {
+        LOW: {
+            stars: 100,
+            clouds: 15,
+            shapes: 4,
+            texts: 3,
+            shadows: false,
+            gradients: false,
+            resolutionScale: 0.75,
+            shadowBlurScale: 0.0
+        },
+        MEDIUM: {
+            stars: 220,
+            clouds: 35,
+            shapes: 8,
+            texts: 6,
+            shadows: true,
+            gradients: true,
+            resolutionScale: 0.9,
+            shadowBlurScale: 0.5
+        },
+        HIGH: {
+            stars: 400,
+            clouds: 60,
+            shapes: 12,
+            texts: 10,
+            shadows: true,
+            gradients: true,
+            resolutionScale: 1.0,
+            shadowBlurScale: 1.0
+        }
+    };
+
+    // Hardware and device detection
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 0);
+    const cores = navigator.hardwareConcurrency || 4;
+    let currentLevel = 'HIGH';
+
+    if (isMobile) {
+        currentLevel = cores < 4 ? 'LOW' : 'MEDIUM';
+    } else {
+        currentLevel = cores < 4 ? 'LOW' : (cores < 8 ? 'MEDIUM' : 'HIGH');
     }
-    window.addEventListener('resize', resize);
-    resize();
+
+    // Profiler metrics
+    let frameCount = 0;
+    let lastTime = performance.now();
+    let fpsHistory = [];
+    const profilerDuration = 1500; // Profile in 1.5 second chunks
 
     // Generate N-Dimensional Hypercube
     function generateHypercube(dim) {
@@ -694,42 +736,6 @@
         }
     }, {passive: true});
 
-    // 3D Parallax Tilt logic moved to physics engine loop to combine forces
-
-    // Create cloud of infinity shapes
-    const shapes = [];
-    const numShapes = 12; // Reduced for a cleaner, professional aesthetic
-
-    for (let i = 0; i < numShapes; i++) {
-        // Randomly choose dimension between 3 and 6
-        let dim = Math.floor(Math.random() * 4) + 3;
-        
-        // Define random rotation planes to animate
-        let planes = [];
-        let numPlanes = Math.min(4, Math.floor(dim * (dim - 1) / 2));
-        for (let p = 0; p < numPlanes; p++) {
-            let a1 = Math.floor(Math.random() * dim);
-            let a2 = Math.floor(Math.random() * dim);
-            while(a1 === a2) a2 = Math.floor(Math.random() * dim);
-            planes.push({ axis1: a1, axis2: a2, speed: (Math.random() - 0.5) * 0.03 });
-        }
-
-        shapes.push({
-            hypercube: generateHypercube(dim),
-            x: Math.random() * window.innerWidth,
-            y: Math.random() * window.innerHeight,
-            vx: (Math.random() - 0.5) * 0.4,
-            vy: (Math.random() - 0.5) * 0.4,
-            scale: Math.random() * 30 + 15, // size of the shape
-            planes: planes,
-            angle: 0,
-            baseColor: dim === 3 ? '212, 175, 55' : dim === 4 ? '217, 119, 6' : dim === 5 ? '154, 52, 18' : '110, 36, 12' // Professional gold/bronze palette
-        });
-    }
-
-    const fragments = []; // Array to store breaking pieces
-    const eventHorizon = 120; // Black hole capture radius
-
     const textSnippets = [
         "E = mc²",
         "iℏ(∂Ψ/∂t) = HΨ",
@@ -744,17 +750,95 @@
         "if (state.collapse()) return;"
     ];
 
+    // Arrays to store entities
+    const stars = [];
+    const nebulaClouds = [];
+    const shapes = [];
     const floatingTexts = [];
-    for (let i = 0; i < 10; i++) { // Reduced count for less clutter
-        floatingTexts.push({
-            text: textSnippets[Math.floor(Math.random() * textSnippets.length)],
-            x: Math.random() * window.innerWidth,
-            y: Math.random() * window.innerHeight,
-            vx: (Math.random() - 0.5) * 0.4,
-            vy: (Math.random() - 0.5) * 0.4,
-            scale: Math.random() * 0.6 + 0.6, // 0.6 to 1.2 scale
-            color: `rgba(245, 240, 235, ${Math.random() * 0.2 + 0.05})` // fainter off-white
-        });
+    const fragments = []; // Array to store breaking pieces
+    const eventHorizon = 120; // Black hole capture radius
+
+    // Dynamic Level-of-Detail applier
+    function applyProfile(level) {
+        currentLevel = level;
+        const config = PROFILE[level];
+        
+        // Re-scale canvas resolution
+        resize();
+
+        // Adjust star count
+        while (stars.length > config.stars) stars.pop();
+        while (stars.length < config.stars) {
+            let radius = Math.random() * (window.innerWidth * 0.8);
+            stars.push({
+                angle: Math.random() * Math.PI * 2,
+                radius: radius,
+                speed: (Math.random() * 0.8 + 0.2) / Math.max(radius, 50),
+                size: Math.random() * 1.5 + 0.5,
+                color: Math.random() > 0.7 ? 'rgba(217, 119, 6, ' : 'rgba(255, 255, 255, ',
+                alpha: Math.random() * 0.6 + 0.1
+            });
+        }
+
+        // Adjust nebula clouds
+        while (nebulaClouds.length > config.clouds) nebulaClouds.pop();
+        while (nebulaClouds.length < config.clouds) {
+            let ratio = nebulaClouds.length / config.clouds;
+            let radius = 60 + ratio * 280;
+            let color;
+            if (ratio < 0.2) color = 'rgba(255, 245, 230, ';
+            else if (ratio < 0.5) color = 'rgba(217, 119, 6, ';
+            else if (ratio < 0.8) color = 'rgba(154, 52, 18, ';
+            else color = 'rgba(110, 36, 12, ';
+            
+            nebulaClouds.push({
+                angle: Math.random() * Math.PI * 2,
+                radius: radius,
+                speed: 0.025 / (ratio + 0.15),
+                size: 200 + (1 - ratio) * 200,
+                color: color,
+                alpha: 0.18 - (ratio * 0.1)
+            });
+        }
+
+        // Adjust shapes
+        while (shapes.length > config.shapes) shapes.pop();
+        while (shapes.length < config.shapes) {
+            let dim = Math.floor(Math.random() * 4) + 3;
+            let planes = [];
+            let numPlanes = Math.min(4, Math.floor(dim * (dim - 1) / 2));
+            for (let p = 0; p < numPlanes; p++) {
+                let a1 = Math.floor(Math.random() * dim);
+                let a2 = Math.floor(Math.random() * dim);
+                while(a1 === a2) a2 = Math.floor(Math.random() * dim);
+                planes.push({ axis1: a1, axis2: a2, speed: (Math.random() - 0.5) * 0.03 });
+            }
+            shapes.push({
+                hypercube: generateHypercube(dim),
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight,
+                vx: (Math.random() - 0.5) * 0.4,
+                vy: (Math.random() - 0.5) * 0.4,
+                scale: Math.random() * 30 + 15,
+                planes: planes,
+                angle: 0,
+                baseColor: dim === 3 ? '212, 175, 55' : dim === 4 ? '217, 119, 6' : dim === 5 ? '154, 52, 18' : '110, 36, 12'
+            });
+        }
+
+        // Adjust floating texts
+        while (floatingTexts.length > config.texts) floatingTexts.pop();
+        while (floatingTexts.length < config.texts) {
+            floatingTexts.push({
+                text: textSnippets[Math.floor(Math.random() * textSnippets.length)],
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight,
+                vx: (Math.random() - 0.5) * 0.4,
+                vy: (Math.random() - 0.5) * 0.4,
+                scale: Math.random() * 0.6 + 0.6,
+                color: `rgba(245, 240, 235, ${Math.random() * 0.2 + 0.05})`
+            });
+        }
     }
 
     // Tile Invisible Borders (Repulsion Fields)
@@ -776,74 +860,97 @@
             };
         });
     }
+
+    // Initialize Layout & Profile
+    applyProfile(currentLevel);
+
+    function resize() {
+        const config = PROFILE[currentLevel];
+        const scale = config.resolutionScale;
+
+        // Set CSS container dimensions (logical size)
+        canvas.style.width = window.innerWidth + 'px';
+        canvas.style.height = window.innerHeight + 'px';
+
+        // Set buffer dimensions (actual hardware pixels)
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width * scale;
+        canvas.height = height * scale;
+
+        // Scale context coordinate system back to CSS coordinates
+        ctx.scale(scale, scale);
+    }
+
+    window.addEventListener('resize', () => {
+        resize();
+        updateTileRects();
+    });
     window.addEventListener('scroll', updateTileRects);
-    window.addEventListener('resize', updateTileRects);
-    setTimeout(updateTileRects, 100); // Initialize after layout
-
-    // Initialize Galaxy Stars
-    const stars = [];
-    for (let i = 0; i < 400; i++) {
-        let radius = Math.random() * (window.innerWidth * 0.8);
-        stars.push({
-            angle: Math.random() * Math.PI * 2,
-            radius: radius,
-            speed: (Math.random() * 0.8 + 0.2) / Math.max(radius, 50), // Keplerian orbit (faster inside)
-            size: Math.random() * 1.5 + 0.5,
-            color: Math.random() > 0.7 ? 'rgba(217, 119, 6, ' : 'rgba(255, 255, 255, ',
-            alpha: Math.random() * 0.6 + 0.1
-        });
-    }
-
-    // Initialize Structured Hypernova Accretion Disk (Remnant Clouds)
-    const nebulaClouds = [];
-    const numClouds = 60;
-    for (let i = 0; i < numClouds; i++) {
-        let ratio = i / numClouds; // 0 (center) to 1 (outer edge)
-        let radius = 60 + ratio * 280; // Inner edge to outer edge spread
-        
-        let color;
-        if (ratio < 0.2) color = 'rgba(255, 245, 230, '; // White hot core
-        else if (ratio < 0.5) color = 'rgba(217, 119, 6, '; // Amber mid-disk
-        else if (ratio < 0.8) color = 'rgba(154, 52, 18, '; // Bronze outer
-        else color = 'rgba(110, 36, 12, '; // Dark cooling edge
-        
-        nebulaClouds.push({
-            angle: Math.random() * Math.PI * 2,
-            radius: radius,
-            speed: 0.025 / (ratio + 0.15), // Keplerian orbital speed (faster inside, slower outside)
-            size: 200 + (1 - ratio) * 200, // Larger clouds near center
-            color: color,
-            alpha: 0.18 - (ratio * 0.1) // Fades out towards the edges
-        });
-    }
+    setTimeout(updateTileRects, 100);
 
     let grbAngle = 0; // Tracks the rotation of the Gamma Ray Burst beams
     let shockwaveRadius = 0; // Tracks the expanding hypernova shockwave
 
     function draw() {
+        // Stop execution completely if the page is in the background (conserves battery/CPU)
+        if (document.hidden) {
+            requestAnimationFrame(draw);
+            return;
+        }
+
+        // Performance Profiler (real-time FPS monitoring)
+        frameCount++;
+        const now = performance.now();
+        if (now - lastTime >= profilerDuration) {
+            const fps = (frameCount * 1000) / (now - lastTime);
+            fpsHistory.push(fps);
+            if (fpsHistory.length > 4) fpsHistory.shift();
+            
+            if (fpsHistory.length >= 3) {
+                const avgFps = fpsHistory.reduce((a, b) => a + b, 0) / fpsHistory.length;
+                // Downgrade quality step-by-step if average frame rate drops
+                if (avgFps < 45 && currentLevel === 'HIGH') {
+                    console.warn(`Performance drop detected (${avgFps.toFixed(1)} FPS). Downgrading to MEDIUM quality.`);
+                    applyProfile('MEDIUM');
+                    fpsHistory = [];
+                } else if (avgFps < 35 && currentLevel === 'MEDIUM') {
+                    console.warn(`Performance drop detected (${avgFps.toFixed(1)} FPS). Downgrading to LOW quality.`);
+                    applyProfile('LOW');
+                    fpsHistory = [];
+                }
+            }
+            frameCount = 0;
+            lastTime = now;
+        }
+
         ctx.clearRect(0, 0, width, height);
 
         const centerX = width / 2;
         const centerY = height / 2;
+        const config = PROFILE[currentLevel];
 
-        // Update all star physics first
+        // Update all star physics
         for (let star of stars) {
             star.angle += star.speed;
         }
 
-        // Function to render stars based on Z-depth (front or back of the black hole)
+        // Render stars with profile-dependent shadow effects
         const renderStars = (isFront) => {
-            ctx.shadowBlur = 12;
-            ctx.shadowColor = 'rgba(217, 119, 6, 0.8)';
+            if (config.shadows) {
+                ctx.shadowBlur = 12 * config.shadowBlurScale;
+                ctx.shadowColor = 'rgba(217, 119, 6, 0.8)';
+            } else {
+                ctx.shadowBlur = 0;
+            }
+
             for (let star of stars) {
-                // Determine if star is in the front or back half of its orbit
                 let isStarFront = Math.sin(star.angle) >= 0;
                 if (isFront !== isStarFront) continue;
                 
                 let starX = centerX + Math.cos(star.angle) * star.radius;
-                let starY = centerY + Math.sin(star.angle) * star.radius * 0.5; // Flatter elliptical tilt for 3D effect
+                let starY = centerY + Math.sin(star.angle) * star.radius * 0.5;
                 
-                // Add slight spatial warp if mouse is nearby
                 let distMouseStar = Math.sqrt(Math.pow(starX - mouse.x, 2) + Math.pow(starY - mouse.y, 2));
                 if (distMouseStar < 200) {
                     starX -= (starX - mouse.x) * 0.08;
@@ -855,23 +962,28 @@
                 ctx.arc(starX, starY, star.size, 0, Math.PI * 2);
                 ctx.fill();
             }
-            ctx.shadowBlur = 0; // Reset for rest of rendering
+            ctx.shadowBlur = 0; // Reset
         };
 
         // 1. Render Back Stars
         renderStars(false);
 
         // Update GRB Pulsar Effect
-        let grbAngle = Math.PI / 2; // Fixed straight up and down
-        let flashPulse = 0.85 + 0.15 * Math.sin(Date.now() * 0.002); // Majestic, cinematic heartbeat pulse
+        let grbAngleVal = Math.PI / 2; // Fixed straight up and down
+        let flashPulse = 0.85 + 0.15 * Math.sin(Date.now() * 0.002);
 
         // Draw Expanding Hypernova Shockwave
-        shockwaveRadius += 6.0; // Fast expanding shockwave
+        shockwaveRadius += 6.0;
         if (shockwaveRadius > width * 1.5) {
-            shockwaveRadius = 0; // Reset
+            shockwaveRadius = 0;
         }
-        ctx.shadowBlur = 40;
-        ctx.shadowColor = `rgba(217, 119, 6, ${0.8 * flashPulse})`;
+
+        if (config.shadows) {
+            ctx.shadowBlur = 40 * config.shadowBlurScale;
+            ctx.shadowColor = `rgba(217, 119, 6, ${0.8 * flashPulse})`;
+        } else {
+            ctx.shadowBlur = 0;
+        }
         ctx.strokeStyle = `rgba(249, 115, 22, ${Math.max(0, 0.8 * flashPulse - (shockwaveRadius / width))})`;
         ctx.lineWidth = 4;
         ctx.beginPath();
@@ -879,11 +991,15 @@
         ctx.stroke();
 
         // Draw Gamma Ray Burst Beams (Background Layer)
-        ctx.shadowBlur = 50 * flashPulse;
-        ctx.shadowColor = 'rgba(255, 245, 230, 0.9)';
+        if (config.shadows) {
+            ctx.shadowBlur = 50 * flashPulse * config.shadowBlurScale;
+            ctx.shadowColor = 'rgba(255, 245, 230, 0.9)';
+        } else {
+            ctx.shadowBlur = 0;
+        }
         
         // Vertical Beam 1 (Top)
-        let beamGradient1 = ctx.createLinearGradient(centerX, centerY, centerX + Math.cos(grbAngle) * height, centerY + Math.sin(grbAngle) * height);
+        let beamGradient1 = ctx.createLinearGradient(centerX, centerY, centerX + Math.cos(grbAngleVal) * height, centerY + Math.sin(grbAngleVal) * height);
         beamGradient1.addColorStop(0, `rgba(255, 255, 255, ${0.9 * flashPulse})`);
         beamGradient1.addColorStop(0.15, `rgba(217, 119, 6, ${0.6 * flashPulse})`);
         beamGradient1.addColorStop(1, 'transparent');
@@ -891,13 +1007,13 @@
         ctx.fillStyle = beamGradient1;
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
-        ctx.lineTo(centerX + Math.cos(grbAngle - 0.08) * height, centerY + Math.sin(grbAngle - 0.08) * height);
-        ctx.lineTo(centerX + Math.cos(grbAngle + 0.08) * height, centerY + Math.sin(grbAngle + 0.08) * height);
+        ctx.lineTo(centerX + Math.cos(grbAngleVal - 0.08) * height, centerY + Math.sin(grbAngleVal - 0.08) * height);
+        ctx.lineTo(centerX + Math.cos(grbAngleVal + 0.08) * height, centerY + Math.sin(grbAngleVal + 0.08) * height);
         ctx.closePath();
         ctx.fill();
 
         // Vertical Beam 2 (Bottom)
-        let beamGradient2 = ctx.createLinearGradient(centerX, centerY, centerX + Math.cos(grbAngle + Math.PI) * height, centerY + Math.sin(grbAngle + Math.PI) * height);
+        let beamGradient2 = ctx.createLinearGradient(centerX, centerY, centerX + Math.cos(grbAngleVal + Math.PI) * height, centerY + Math.sin(grbAngleVal + Math.PI) * height);
         beamGradient2.addColorStop(0, `rgba(255, 255, 255, ${0.9 * flashPulse})`);
         beamGradient2.addColorStop(0.15, `rgba(217, 119, 6, ${0.6 * flashPulse})`);
         beamGradient2.addColorStop(1, 'transparent');
@@ -905,12 +1021,12 @@
         ctx.fillStyle = beamGradient2;
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
-        ctx.lineTo(centerX + Math.cos(grbAngle + Math.PI - 0.08) * height, centerY + Math.sin(grbAngle + Math.PI - 0.08) * height);
-        ctx.lineTo(centerX + Math.cos(grbAngle + Math.PI + 0.08) * height, centerY + Math.sin(grbAngle + Math.PI + 0.08) * height);
+        ctx.lineTo(centerX + Math.cos(grbAngleVal + Math.PI - 0.08) * height, centerY + Math.sin(grbAngleVal + Math.PI - 0.08) * height);
+        ctx.lineTo(centerX + Math.cos(grbAngleVal + Math.PI + 0.08) * height, centerY + Math.sin(grbAngleVal + Math.PI + 0.08) * height);
         ctx.closePath();
         ctx.fill();
 
-        // Horizontal Lens Flare (Diffraction Spike for real space photo look)
+        // Horizontal Lens Flare (Diffraction Spike)
         let flareWidth = width * 0.8;
         let flareGradient = ctx.createLinearGradient(centerX - flareWidth/2, centerY, centerX + flareWidth/2, centerY);
         flareGradient.addColorStop(0, 'transparent');
@@ -921,55 +1037,68 @@
         
         ctx.fillStyle = flareGradient;
         ctx.beginPath();
-        ctx.ellipse(centerX, centerY, flareWidth/2, 1.2 * flashPulse, 0, 0, Math.PI * 2); // Thinner, sharper diffraction spike
+        ctx.ellipse(centerX, centerY, flareWidth/2, 1.2 * flashPulse, 0, 0, Math.PI * 2);
         ctx.fill();
         
         ctx.shadowBlur = 0; // Reset for clouds
 
-        // 2. Draw Supernova Remnant Clouds
+        // 2. Draw Supernova Remnant Clouds (with gradient bypass for performance)
         for (let cloud of nebulaClouds) {
-            cloud.angle += cloud.speed * 0.2; // Smooth unified rotation
+            cloud.angle += cloud.speed * 0.2;
             
             let cx = centerX + Math.cos(cloud.angle) * cloud.radius;
-            let cy = centerY + Math.sin(cloud.angle) * cloud.radius * 0.45; // Stronger 3D elliptical tilt
+            let cy = centerY + Math.sin(cloud.angle) * cloud.radius * 0.45;
             
-            // Subtle spatial drag from mouse
             let distMouseCloud = Math.sqrt(Math.pow(cx - mouse.x, 2) + Math.pow(cy - mouse.y, 2));
             if (distMouseCloud < 250) {
                 cx -= (cx - mouse.x) * 0.03;
                 cy -= (cy - mouse.y) * 0.03;
             }
             
-            let nGradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, cloud.size);
-            nGradient.addColorStop(0, cloud.color + cloud.alpha + ')');
-            nGradient.addColorStop(0.5, cloud.color + (cloud.alpha * 0.5) + ')');
-            nGradient.addColorStop(1, 'transparent');
+            if (config.gradients) {
+                let nGradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, cloud.size);
+                nGradient.addColorStop(0, cloud.color + cloud.alpha + ')');
+                nGradient.addColorStop(0.5, cloud.color + (cloud.alpha * 0.5) + ')');
+                nGradient.addColorStop(1, 'transparent');
+                ctx.fillStyle = nGradient;
+            } else {
+                // High performance fallback (skips expensive browser gradient generation)
+                ctx.fillStyle = cloud.color + (cloud.alpha * 0.2) + ')';
+            }
             
-            ctx.fillStyle = nGradient;
             ctx.beginPath();
             ctx.arc(cx, cy, cloud.size, 0, Math.PI * 2);
             ctx.fill();
         }
 
         // Hypernova Neutron Star Core
-        ctx.shadowBlur = 80;
-        ctx.shadowColor = 'rgba(255, 255, 255, 1)';
-        let nsGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 220);
-        nsGradient.addColorStop(0, 'rgba(255, 255, 255, 1)'); // Dense Neutron Core
-        nsGradient.addColorStop(0.1, 'rgba(255, 245, 230, 0.9)'); // High energy plasma
-        nsGradient.addColorStop(0.3, 'rgba(217, 119, 6, 0.8)'); // Amber explosion
-        nsGradient.addColorStop(0.7, 'rgba(220, 38, 38, 0.3)'); // Supernova blast edge
-        nsGradient.addColorStop(1, 'transparent');
-        ctx.fillStyle = nsGradient;
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, 220, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
+        if (config.gradients) {
+            ctx.shadowBlur = 80 * config.shadowBlurScale;
+            ctx.shadowColor = 'rgba(255, 255, 255, 1)';
+            let nsGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 220);
+            nsGradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+            nsGradient.addColorStop(0.1, 'rgba(255, 245, 230, 0.9)');
+            nsGradient.addColorStop(0.3, 'rgba(217, 119, 6, 0.8)');
+            nsGradient.addColorStop(0.7, 'rgba(220, 38, 38, 0.3)');
+            nsGradient.addColorStop(1, 'transparent');
+            ctx.fillStyle = nsGradient;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 220, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        } else {
+            ctx.shadowBlur = 0;
+            // Flat fallback
+            ctx.fillStyle = 'rgba(255, 245, 230, 0.9)';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 40, 0, Math.PI * 2);
+            ctx.fill();
+        }
 
-        // 3. Render Front Stars (Passes over the Binary Nebula)
+        // 3. Render Front Stars
         renderStars(true);
 
-        // Reset tile target tilts and calculate mouse influence on the invisible layer
+        // Reset tile target tilts and calculate mouse influence
         for (let rect of tileRects) {
             rect.targetTiltX = 0;
             rect.targetTiltY = 0;
@@ -978,7 +1107,6 @@
             let dyMouseTile = mouse.y - rect.y;
             let distMouseTile = Math.sqrt(dxMouseTile*dxMouseTile + dyMouseTile*dyMouseTile);
             
-            // If mouse is inside the invisible layer, tilt the tile
             if (!isTouch && distMouseTile < rect.radius) {
                 rect.targetTiltX = (dyMouseTile / (rect.height / 2)) * -8;
                 rect.targetTiltY = (dxMouseTile / (rect.width / 2)) * 8;
@@ -986,30 +1114,27 @@
         }
 
         for (let shape of shapes) {
-            // Distance to Central Neutron Star
             let dxBH = centerX - shape.x;
             let dyBH = centerY - shape.y;
             let distBH = Math.sqrt(dxBH*dxBH + dyBH*dyBH);
 
-            // Gamma Ray Burst Interaction (Blow objects away horizontally if they cross the vertical beam)
+            // Gamma Ray Burst Interaction (Horizontally blow objects crossing vertical jets)
             let shapeAngle = Math.atan2(dyBH, dxBH);
             let angleDiff1 = Math.abs(shapeAngle - (Math.PI / 2));
             let angleDiff2 = Math.abs(shapeAngle - (-Math.PI / 2));
-            // Normalize angles
             if (angleDiff1 > Math.PI) angleDiff1 = Math.PI * 2 - angleDiff1;
             if (angleDiff2 > Math.PI) angleDiff2 = Math.PI * 2 - angleDiff2;
             
             if (angleDiff1 < 0.15 || angleDiff2 < 0.15) {
-                // Ejected horizontally by relativistic jets!
                 shape.vx += (dxBH > 0 ? 1 : -1) * 8.0;
                 shape.vy += (dyBH > 0 ? 1 : -1) * 2.0;
-                shape.angle += 0.5; // Chaotic tumbling
+                shape.angle += 0.5;
             }
 
             if (distBH < eventHorizon) {
-                // Break apart into fragments due to intense heat/density of the Supernova
-
-                for (let j = 0; j < 40; j++) {
+                // Shatter shape into fragments
+                const maxFragments = config.shapes > 6 ? 40 : 15; // Limit fragments on low-end hardware
+                for (let j = 0; j < maxFragments; j++) {
                     fragments.push({
                         x: shape.x + (Math.random() - 0.5) * shape.scale * 2.5,
                         y: shape.y + (Math.random() - 0.5) * shape.scale * 2.5,
@@ -1020,7 +1145,7 @@
                     });
                 }
                 
-                // Respawn shape at edges
+                // Respawn
                 if (Math.random() > 0.5) {
                     shape.x = Math.random() > 0.5 ? -150 : width + 150;
                     shape.y = Math.random() * height;
@@ -1030,16 +1155,16 @@
                 }
                 shape.vx = (Math.random() - 0.5) * 0.4;
                 shape.vy = (Math.random() - 0.5) * 0.4;
-                continue; // Skip rendering the hypercube this frame
+                continue;
             }
 
-            // Apply Supernova Gravity (Center of Mass)
+            // Apply Core Gravity
             let gravity = 1000 / (distBH * distBH); 
-            if (gravity > 2.0) gravity = 2.0; // Cap to avoid teleporting
+            if (gravity > 2.0) gravity = 2.0;
             shape.vx += (dxBH / distBH) * gravity;
             shape.vy += (dyBH / distBH) * gravity;
 
-            // Mouse Repulsion (Curvature Point)
+            // Mouse Repulsion
             let dxMouse = shape.x - mouse.x;
             let dyMouse = shape.y - mouse.y;
             let distMouse = Math.sqrt(dxMouse*dxMouse + dyMouse*dyMouse);
@@ -1048,10 +1173,10 @@
                 let force = (120 - distMouse) / 120;
                 shape.vx += (dxMouse / distMouse) * force * 2.5;
                 shape.vy += (dyMouse / distMouse) * force * 2.5;
-                shape.angle += force * 0.05; // Spatial warp effect
+                shape.angle += force * 0.05;
             }
 
-            // Tile Repulsion (Invisible border behind tiles)
+            // Tile Repulsion
             for (let rect of tileRects) {
                 let dxTile = shape.x - rect.x;
                 let dyTile = shape.y - rect.y;
@@ -1061,9 +1186,8 @@
                     let force = (rect.radius - distTile) / rect.radius;
                     shape.vx += (dxTile / distTile) * force * 2.0;
                     shape.vy += (dyTile / distTile) * force * 2.0;
-                    shape.angle += force * 0.05; // Spatial warp effect
+                    shape.angle += force * 0.05;
 
-                    // Shape impacting the invisible layer physically tilts the tile!
                     if (!isTouch) {
                         rect.targetTiltX += (dyTile / (rect.height / 2)) * force * -6;
                         rect.targetTiltY += (dxTile / (rect.width / 2)) * force * 6;
@@ -1071,15 +1195,13 @@
                 }
             }
 
-            // Friction to slow down repulsion smoothly
             shape.vx *= 0.96;
             shape.vy *= 0.96;
 
-            // Move shape
             shape.x += shape.vx;
             shape.y += shape.vy;
             
-            // Wrap around edges to simulate infinity field
+            // Wrap coordinates
             if (shape.x < -150) shape.x = width + 150;
             if (shape.x > width + 150) shape.x = -150;
             if (shape.y < -150) shape.y = height + 150;
@@ -1143,19 +1265,16 @@
             let fdy = centerY - f.y;
             let fdist = Math.sqrt(fdx*fdx + fdy*fdy);
             
-            // Strong pull to center to ensure they are absorbed by the nebula core
             let pullForce = 8;
             f.vx += (fdx / fdist) * pullForce;
             f.vy += (fdy / fdist) * pullForce;
             
-            // Spiraling effect (tangent velocity)
             let tangentX = -fdy / fdist;
             let tangentY = fdx / fdist;
             
             f.vx += tangentX * 2.5;
             f.vy += tangentY * 2.5;
 
-            // Friction to prevent orbiting forever and force sucking in
             f.vx *= 0.85;
             f.vy *= 0.85;
             
@@ -1168,7 +1287,6 @@
             ctx.arc(f.x, f.y, 1.5, 0, Math.PI * 2);
             ctx.fill();
             
-            // Remove when dead or absorbed by the nebula core
             if (f.life <= 0 || fdist < 10) {
                 fragments.splice(i, 1);
             }
@@ -1184,7 +1302,6 @@
             let distBH = Math.sqrt(dxBH*dxBH + dyBH*dyBH);
 
             if (distBH < eventHorizon) {
-                // Thermal disintegration of text inside the nebula core
                 for (let j = 0; j < 5; j++) {
                     fragments.push({
                         x: t.x + (Math.random() - 0.5) * 15,
@@ -1196,7 +1313,7 @@
                     });
                 }
                 
-                // Respawn text at edges
+                // Respawn
                 if (Math.random() > 0.5) {
                     t.x = Math.random() > 0.5 ? -200 : width + 200;
                     t.y = Math.random() * height;
@@ -1221,7 +1338,7 @@
             let distMouse = Math.sqrt(dxMouse*dxMouse + dyMouse*dyMouse);
             if (distMouse < 120) {
                 let force = (120 - distMouse) / 120;
-                t.vx += (dxMouse / distMouse) * force * 6.0; // Increased force to allow shattering with smaller radius
+                t.vx += (dxMouse / distMouse) * force * 6.0;
                 t.vy += (dyMouse / distMouse) * force * 6.0;
             }
 
@@ -1233,7 +1350,7 @@
                 
                 if (distTile < rect.radius) {
                     let force = (rect.radius - distTile) / rect.radius;
-                    t.vx += (dxTile / distTile) * force * 3.0; // Increased force
+                    t.vx += (dxTile / distTile) * force * 3.0;
                     t.vy += (dyTile / distTile) * force * 3.0;
                 }
             }
@@ -1244,7 +1361,7 @@
             t.x += t.vx;
             t.y += t.vy;
 
-            // Break apart if moving too fast (sudden force)
+            // Break apart text if moving extremely fast
             let speed = Math.sqrt(t.vx*t.vx + t.vy*t.vy);
             if (speed > 8 && t.text.length > 1) {
                 ctx.font = `${Math.floor(16 * t.scale)}px monospace`;
@@ -1253,24 +1370,22 @@
                 let startX = t.x - totalWidth / 2 + charWidth / 2;
                 
                 for (let c = 0; c < t.text.length; c++) {
-                    // Ignore empty spaces
                     if (t.text[c] === ' ') continue;
 
                     floatingTexts.push({
                         text: t.text[c],
                         x: startX + c * charWidth,
                         y: t.y,
-                        vx: t.vx + (Math.random() - 0.5) * 8, // Explosive scatter
+                        vx: t.vx + (Math.random() - 0.5) * 8,
                         vy: t.vy + (Math.random() - 0.5) * 8,
                         scale: t.scale,
                         color: t.color
                     });
                 }
                 floatingTexts.splice(i, 1);
-                continue; // Skip rendering this frame for the shattered string
+                continue;
             }
 
-            // Wrap around edges
             if (t.x < -200) t.x = width + 200;
             if (t.x > width + 200) t.x = -200;
             if (t.y < -200) t.y = height + 200;
@@ -1281,27 +1396,24 @@
             ctx.fillText(t.text, t.x, t.y);
         }
 
-        // Apply physics-based tilt to tiles combining all forces on the invisible layer
+        // Apply physics-based tilt to cards
         for (let rect of tileRects) {
-            // Clamp target tilt so it doesn't spin out of control from multiple impacts
             if (rect.targetTiltX > 12) rect.targetTiltX = 12;
             if (rect.targetTiltX < -12) rect.targetTiltX = -12;
             if (rect.targetTiltY > 12) rect.targetTiltY = 12;
             if (rect.targetTiltY < -12) rect.targetTiltY = -12;
 
-            // Lerp interpolation for buttery smooth physics response
             rect.tiltX += (rect.targetTiltX - rect.tiltX) * 0.15;
             rect.tiltY += (rect.targetTiltY - rect.tiltY) * 0.15;
 
-            // Apply transform dynamically based on forces
             if (Math.abs(rect.tiltX) > 0.1 || Math.abs(rect.tiltY) > 0.1) {
                 rect.el.style.transform = `translateY(-10px) rotateX(${rect.tiltX}deg) rotateY(${rect.tiltY}deg)`;
                 rect.el.style.boxShadow = `-20px 25px 50px rgba(0, 0, 0, 0.5)`;
                 rect.el.style.borderColor = `rgba(217, 119, 6, 0.4)`;
             } else {
                 rect.el.style.transform = `translateY(0px) rotateX(0deg) rotateY(0deg)`;
-                rect.el.style.boxShadow = ``; // Clear inline style so CSS hover works
-                rect.el.style.borderColor = ``; // Clear inline style
+                rect.el.style.boxShadow = ``;
+                rect.el.style.borderColor = ``;
             }
         }
 
@@ -1310,7 +1422,7 @@
 
     draw();
 
-    // Cinematic Scroll Reveals (IntersectionObserver)
+    // Scroll reveal logic
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -1324,7 +1436,6 @@
         el.style.opacity = '0';
         observer.observe(el);
     });
-
 </script>
 
 </body>
