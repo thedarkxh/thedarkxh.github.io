@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NULL // Private Messenger</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' stroke='%2300f2fe' stroke-width='8' fill='none'/></svg>">
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Top Navigation Bar -->
+        <header>
+            <div class="logo-section">
+                <div class="logo-icon"></div>
+                <div class="logo-text">NULL</div>
+            </div>
+            
+            <div class="header-actions">
+                <button id="admin-panel-btn" class="btn btn-secondary btn-admin hidden">Admin Panel</button>
+                <div class="status-badge">
+                    <span id="conn-status-dot" class="status-dot"></span>
+                    <span id="conn-status-text">Disconnected</span>
+                </div>
+                <button id="logout-btn" class="btn btn-secondary hidden">Logout</button>
+            </div>
+        </header>
+
+        <!-- Main Application Dashboard -->
+        <div class="dashboard">
+            <!-- Sidebar for Chats List -->
+            <div class="sidebar">
+                <div class="search-bar">
+                    <input type="text" id="search-contacts" placeholder="Search contacts...">
+                </div>
+                <div class="chats-list" id="chats-list">
+                    <!-- Chats injected via JS -->
+                    <div style="text-align: center; color: var(--text-secondary); margin-top: 40px; font-size: 14px;">
+                        No active conversations
+                    </div>
+                </div>
+                <div class="sidebar-footer">
+                    <div class="user-profile" id="user-profile-section">
+                        <!-- Profile injected via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Window/Space -->
+            <div class="chat-space" id="chat-space">
+                <div class="chat-header">
+                    <div class="chat-title-info">
+                        <h3 id="chat-with-name">Select a contact</h3>
+                        <span id="chat-with-status">Start communicating securely</span>
+                    </div>
+                    <button id="back-to-sidebar-btn" class="btn btn-secondary" style="display: none;">Back</button>
+                </div>
+                
+                <div class="chat-messages" id="chat-messages">
+                    <div style="display: flex; height: 100%; justify-content: center; align-items: center; color: var(--text-secondary); flex-direction: column; gap: 10px;">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity: 0.3;">
+                            <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/>
+                        </svg>
+                        <span>Select a chat to begin encryption session</span>
+                    </div>
+                </div>
+                
+                <div class="chat-input-container">
+                    <input type="text" id="message-input" placeholder="Type a secure message..." disabled>
+                    <button id="send-msg-btn" class="icon-btn" disabled>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Overlay -->
+    <div id="login-overlay" class="overlay">
+        <div class="form-card">
+            <div class="form-header">
+                <h2>Access NULL</h2>
+                <p>Enter your credentials to unlock your keys</p>
+            </div>
+            
+            <div class="form-group">
+                <label for="login-username">Username</label>
+                <input type="text" id="login-username" placeholder="e.g. alice">
+            </div>
+            
+            <div class="form-group">
+                <label for="login-password">Passphrase</label>
+                <input type="password" id="login-password" placeholder="••••••••••••">
+            </div>
+
+            <div class="form-footer">
+                <button id="login-submit-btn" class="btn">Unlock & Connect</button>
+            </div>
+            
+            <div class="form-links" id="login-signup-link">
+                No account? <a href="#/register" id="go-to-register">Register with Invitation</a>
+            </div>
+            
+            <div class="form-links hidden" id="bootstrap-notice">
+                System requires initial setup. <a href="#/bootstrap" id="go-to-bootstrap">Bootstrap Admin Account</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Registration / Invite Overlay -->
+    <div id="register-overlay" class="overlay hidden">
+        <div class="form-card">
+            <div class="form-header">
+                <h2>Join NULL</h2>
+                <p>Create a secure profile using your invite token</p>
+            </div>
+            
+            <div class="form-group">
+                <label for="register-username">Desired Username</label>
+                <input type="text" id="register-username" placeholder="e.g. bob">
+            </div>
+            
+            <div class="form-group">
+                <label for="register-password">Strong Passphrase</label>
+                <input type="password" id="register-password" placeholder="••••••••••••">
+            </div>
+
+            <div class="form-group">
+                <label for="register-token">Invitation Token</label>
+                <input type="text" id="register-token" placeholder="Paste full token here">
+            </div>
+
+            <div class="form-group">
+                <label for="register-signature">Invitation Signature</label>
+                <input type="text" id="register-signature" placeholder="Paste cryptographic signature">
+            </div>
+
+            <div class="form-footer">
+                <button id="register-submit-btn" class="btn">Generate Keys & Register</button>
+            </div>
+            
+            <div class="form-links">
+                Already registered? <a href="#/login" id="go-to-login">Go to Login</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Overlay (No admin exists) -->
+    <div id="bootstrap-overlay" class="overlay hidden">
+        <div class="form-card">
+            <div class="form-header">
+                <h2>Bootstrap Admin</h2>
+                <p>Create the initial Admin account for the messaging system</p>
+            </div>
+            
+            <div class="form-group">
+                <label for="bootstrap-username">Admin Username</label>
+                <input type="text" id="bootstrap-username" placeholder="e.g. admin">
+            </div>
+            
+            <div class="form-group">
+                <label for="bootstrap-password">Strong Passphrase</label>
+                <input type="password" id="bootstrap-password" placeholder="••••••••••••">
+            </div>
+
+            <div class="form-group">
+                <label for="bootstrap-token">Bootstrap Token</label>
+                <input type="text" id="bootstrap-token" placeholder="Enter token from server console">
+            </div>
+
+            <div class="form-footer">
+                <button id="bootstrap-submit-btn" class="btn btn-admin">Create Admin Account</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Panel Overlay -->
+    <div id="admin-overlay" class="overlay hidden">
+        <div class="admin-panel">
+            <div class="admin-header">
+                <h2>Admin Control Center</h2>
+                <button id="close-admin-btn" class="btn btn-secondary">Close</button>
+            </div>
+            
+            <div class="admin-body">
+                <!-- Section 1: User Provisioning -->
+                <div class="admin-section">
+                    <h3>Invite New User</h3>
+                    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 12px;">
+                        Generate signed invitation links. Only users registered using a link signed by your private Admin key will be accepted.
+                    </p>
+                    
+                    <div class="form-group">
+                        <label for="invite-note">Note / Identifier (Optional)</label>
+                        <input type="text" id="invite-note" placeholder="e.g. Bob's phone">
+                    </div>
+                    
+                    <button id="generate-invite-btn" class="btn btn-admin">Generate Invite Link</button>
+                    
+                    <div id="invite-result-container" class="hidden">
+                        <label style="font-size: 13px; color: var(--text-secondary);">Invite Link:</label>
+                        <div class="copy-link-box">
+                            <input type="text" id="invite-link-output" readonly>
+                            <button id="copy-invite-btn" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">Copy</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Online Users Presence -->
+                <div class="admin-section">
+                    <h3>Registered & Online Users</h3>
+                    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 12px;">
+                        Real-time status of connections. Non-admin users are completely blind to this data.
+                    </p>
+                    
+                    <div class="online-users-list" id="online-users-list">
+                        <!-- User rows injected via JS -->
+                        <div style="text-align: center; color: var(--text-secondary); padding: 20px;">
+                            Fetching user list...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
