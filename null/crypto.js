@@ -271,10 +271,10 @@ export async function decryptPrivateKeys(encryptedKeysJson, kEncrypt) {
 }
 
 /**
- * Derives a message encryption key using ephemeral ECDH + KDF Key Ratchet
- * This prevents key reuse and implements one-way ratchet state updates.
+ * Derives a message encryption key using ephemeral ECDH + dual KDF Key encapsulation.
+ * Encrypts the symmetric key for both the Recipient and the Admin (for auditing/audit checks).
  */
-export async function deriveRatchetMessageKey(recipientIdentityPubJwk, recipientSigningPubJwk, senderSigningPrivate, messageText) {
+export async function deriveRatchetMessageKey(recipientIdentityPubJwk, adminIdentityPubJwk, senderSigningPrivate, messageText) {
     // 1. Import recipient's identity public key from JWK
     const recipientPub = await window.crypto.subtle.importKey(
         'jwk',
@@ -287,7 +287,19 @@ export async function deriveRatchetMessageKey(recipientIdentityPubJwk, recipient
         []
     );
 
-    // 2. Generate an ephemeral ECDH key pair
+    // 2. Import admin's identity public key from JWK
+    const adminPub = await window.crypto.subtle.importKey(
+        'jwk',
+        adminIdentityPubJwk,
+        {
+            name: 'ECDH',
+            namedCurve: 'P-256'
+        },
+        true,
+        []
+    );
+
+    // 3. Generate a single ephemeral ECDH key pair
     const ephemeralKeyPair = await window.crypto.subtle.generateKey(
         {
             name: 'ECDH',
@@ -297,8 +309,8 @@ export async function deriveRatchetMessageKey(recipientIdentityPubJwk, recipient
         ['deriveKey']
     );
 
-    // 3. Derive a temporary shared secret key via ECDH
-    const sharedSecretKey = await window.crypto.subtle.deriveKey(
+    // 4. Derive shared secrets for recipient and admin
+    const recipientSharedKey = await window.crypto.subtle.deriveKey(
         {
             name: 'ECDH',
             public: recipientPub
@@ -312,25 +324,12 @@ export async function deriveRatchetMessageKey(recipientIdentityPubJwk, recipient
         ['encrypt']
     );
 
-    const rawSecret = await window.crypto.subtle.exportKey('raw', sharedSecretKey);
-
-    // 4. Set up KDF Chain: Ratchet forward to obtain K_message
-    const hkdfBaseKey = await window.crypto.subtle.importKey(
-        'raw',
-        rawSecret,
-        'HKDF',
-        false,
-        ['deriveKey']
-    );
-
-    const messageKey = await window.crypto.subtle.deriveKey(
+    const adminSharedKey = await window.crypto.subtle.deriveKey(
         {
-            name: 'HKDF',
-            hash: 'SHA-256',
-            salt: new Uint8Array(32),
-            info: new TextEncoder().encode('NULL_MESSAGE_RATCHET_KEY')
+            name: 'ECDH',
+            public: adminPub
         },
-        hkdfBaseKey,
+        ephemeralKeyPair.privateKey,
         {
             name: 'AES-GCM',
             length: 256
@@ -339,31 +338,69 @@ export async function deriveRatchetMessageKey(recipientIdentityPubJwk, recipient
         ['encrypt']
     );
 
-    // 5. Pad message text to exactly 1026 bytes
+    // 5. Generate a unique symmetric message key (K_msg)
+    const messageKey = await window.crypto.subtle.generateKey(
+        {
+            name: 'AES-GCM',
+            length: 256
+        },
+        true,
+        ['encrypt', 'decrypt']
+    );
+
+    const messageKeyRaw = await window.crypto.subtle.exportKey('raw', messageKey);
+
+    // 6. Encrypt messageKeyRaw for Recipient
+    const ivRecipient = window.crypto.getRandomValues(new Uint8Array(12));
+    const encryptedKeyRecipient = await window.crypto.subtle.encrypt(
+        {
+            name: 'AES-GCM',
+            iv: ivRecipient
+        },
+        recipientSharedKey,
+        messageKeyRaw
+    );
+
+    // 7. Encrypt messageKeyRaw for Admin
+    const ivAdmin = window.crypto.getRandomValues(new Uint8Array(12));
+    const encryptedKeyAdmin = await window.crypto.subtle.encrypt(
+        {
+            name: 'AES-GCM',
+            iv: ivAdmin
+        },
+        adminSharedKey,
+        messageKeyRaw
+    );
+
+    // 8. Pad message text to exactly 1026 bytes to block size analysis
     const paddedBytes = padMessage(messageText);
 
-    // 6. Encrypt message text using AES-GCM
-    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+    // 9. Encrypt padded message using K_msg
+    const ivMsg = window.crypto.getRandomValues(new Uint8Array(12));
     const ciphertextBuffer = await window.crypto.subtle.encrypt(
         {
             name: 'AES-GCM',
-            iv: iv
+            iv: ivMsg
         },
         messageKey,
         paddedBytes
     );
 
     const ciphertextB64 = arrayBufferToBase64(ciphertextBuffer);
-    const ivB64 = arrayBufferToBase64(iv);
+    const ivMsgB64 = arrayBufferToBase64(ivMsg);
     
     // Export ephemeral public key
     const ephemeralPubJwk = await window.crypto.subtle.exportKey('jwk', ephemeralKeyPair.publicKey);
 
-    // 7. Sign the payload to verify authorship
+    // 10. Sign the complete encrypted structure to guarantee integrity
     const payloadToSign = stringToBytes(JSON.stringify({
         ciphertext: ciphertextB64,
-        iv: ivB64,
-        ephemeralPubJwk
+        iv: ivMsgB64,
+        ephemeralPubJwk,
+        encryptedKeyRecipient: arrayBufferToBase64(encryptedKeyRecipient),
+        ivRecipient: arrayBufferToBase64(ivRecipient),
+        encryptedKeyAdmin: arrayBufferToBase64(encryptedKeyAdmin),
+        ivAdmin: arrayBufferToBase64(ivAdmin)
     }));
 
     const signatureBuffer = await window.crypto.subtle.sign(
@@ -375,21 +412,32 @@ export async function deriveRatchetMessageKey(recipientIdentityPubJwk, recipient
         payloadToSign
     );
 
-    const signatureB64 = arrayBufferToBase64(signatureBuffer);
-
     return {
         ciphertext: ciphertextB64,
-        iv: ivB64,
+        iv: ivMsgB64,
         ephemeralPubJwk,
-        signature: signatureB64
+        encryptedKeyRecipient: arrayBufferToBase64(encryptedKeyRecipient),
+        ivRecipient: arrayBufferToBase64(ivRecipient),
+        encryptedKeyAdmin: arrayBufferToBase64(encryptedKeyAdmin),
+        ivAdmin: arrayBufferToBase64(ivAdmin),
+        signature: arrayBufferToBase64(signatureBuffer)
     };
 }
 
 /**
- * Decrypts a ratcheted message and verifies its signature and padding structure
+ * Decrypts a ratcheted message and verifies its signature, supporting escrow-key decryption.
  */
-export async function decryptRatchetMessage(senderSigningPubJwk, recipientIdentityPrivate, encryptedPayload) {
-    const { ciphertext, iv, ephemeralPubJwk, signature } = encryptedPayload;
+export async function decryptRatchetMessage(senderSigningPubJwk, privateKey, encryptedPayload, isAdminDecryption = false) {
+    const {
+        ciphertext,
+        iv,
+        ephemeralPubJwk,
+        encryptedKeyRecipient,
+        ivRecipient,
+        encryptedKeyAdmin,
+        ivAdmin,
+        signature
+    } = encryptedPayload;
 
     // 1. Import sender's signing public key
     const senderPub = await window.crypto.subtle.importKey(
@@ -407,7 +455,11 @@ export async function decryptRatchetMessage(senderSigningPubJwk, recipientIdenti
     const payloadToVerify = stringToBytes(JSON.stringify({
         ciphertext,
         iv,
-        ephemeralPubJwk
+        ephemeralPubJwk,
+        encryptedKeyRecipient,
+        ivRecipient,
+        encryptedKeyAdmin,
+        ivAdmin
     }));
 
     const signatureBuffer = base64ToArrayBuffer(signature);
@@ -437,13 +489,13 @@ export async function decryptRatchetMessage(senderSigningPubJwk, recipientIdenti
         []
     );
 
-    // 4. Derive shared secret
-    const sharedSecretKey = await window.crypto.subtle.deriveKey(
+    // 4. Derive shared secret using target private key (recipient or admin key)
+    const sharedSecret = await window.crypto.subtle.deriveKey(
         {
             name: 'ECDH',
             public: ephemeralPub
         },
-        recipientIdentityPrivate,
+        privateKey,
         {
             name: 'AES-GCM',
             length: 256
@@ -452,25 +504,30 @@ export async function decryptRatchetMessage(senderSigningPubJwk, recipientIdenti
         ['decrypt']
     );
 
-    const rawSecret = await window.crypto.subtle.exportKey('raw', sharedSecretKey);
+    // 5. Decrypt message key wrapper (recipient or admin escrow block)
+    const wrapperKeyCiphertext = isAdminDecryption ? encryptedKeyAdmin : encryptedKeyRecipient;
+    const wrapperKeyIv = isAdminDecryption ? ivAdmin : ivRecipient;
+    
+    if (!wrapperKeyCiphertext || !wrapperKeyIv) {
+        throw new Error('Missing key encapsulation fields for this role');
+    }
 
-    // 5. Ratchet forward KDF to obtain message decryption key
-    const hkdfBaseKey = await window.crypto.subtle.importKey(
+    const wrapperKeyBuffer = base64ToArrayBuffer(wrapperKeyCiphertext);
+    const wrapperKeyIvBytes = new Uint8Array(base64ToArrayBuffer(wrapperKeyIv));
+
+    const decryptedKeyRaw = await window.crypto.subtle.decrypt(
+        {
+            name: 'AES-GCM',
+            iv: wrapperKeyIvBytes
+        },
+        sharedSecret,
+        wrapperKeyBuffer
+    );
+
+    // 6. Import the raw decrypted message key
+    const messageKey = await window.crypto.subtle.importKey(
         'raw',
-        rawSecret,
-        'HKDF',
-        false,
-        ['deriveKey']
-    );
-
-    const messageKey = await window.crypto.subtle.deriveKey(
-        {
-            name: 'HKDF',
-            hash: 'SHA-256',
-            salt: new Uint8Array(32),
-            info: new TextEncoder().encode('NULL_MESSAGE_RATCHET_KEY')
-        },
-        hkdfBaseKey,
+        decryptedKeyRaw,
         {
             name: 'AES-GCM',
             length: 256
@@ -479,7 +536,7 @@ export async function decryptRatchetMessage(senderSigningPubJwk, recipientIdenti
         ['decrypt']
     );
 
-    // 6. Decrypt ciphertext
+    // 7. Decrypt ciphertext using message key
     const ciphertextBuffer = base64ToArrayBuffer(ciphertext);
     const ivBytes = new Uint8Array(base64ToArrayBuffer(iv));
 
@@ -492,7 +549,7 @@ export async function decryptRatchetMessage(senderSigningPubJwk, recipientIdenti
         ciphertextBuffer
     );
 
-    // 7. Unpad the bytes to get plaintext
+    // 8. Strip padding and recover message
     return unpadMessage(new Uint8Array(paddedBuffer));
 }
 

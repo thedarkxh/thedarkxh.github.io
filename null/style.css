@@ -747,3 +747,50 @@ header {
         border-bottom: 1px solid var(--border-color);
     }
 }
+
+/* Global Hidden Helper */
+.hidden {
+    display: none !important;
+}
+
+/* Admin Chat Inspector & Deletion Styles */
+.btn-delete {
+    padding: 4px 8px;
+    font-size: 11px;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-delete:hover {
+    background: rgba(239, 68, 68, 0.3);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.2);
+}
+
+.inspector-message {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 13px;
+    margin-bottom: 6px;
+}
+
+.inspector-message .msg-meta {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.inspector-message .msg-body {
+    flex: 1;
+    margin-right: 12px;
+    word-break: break-all;
+}
+

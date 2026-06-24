@@ -316,6 +316,91 @@ async function handleIncomingMessage(msg) {
         case 'admin_users_res':
             renderAdminUsersList(msg.users);
             break;
+
+        case 'admin_chat_history_res': {
+            const inspectorMessages = document.getElementById('admin-inspector-messages');
+            inspectorMessages.innerHTML = '';
+            
+            if (msg.messages.length === 0) {
+                inspectorMessages.innerHTML = '<div style="color:var(--text-secondary); text-align:center; padding-top:60px; font-size:13px;">No messages in this chat.</div>';
+                break;
+            }
+            
+            for (const m of msg.messages) {
+                const payload = JSON.parse(m.encrypted_content);
+                let decryptedText = '[Decryption Failed]';
+                
+                try {
+                    const senderKeys = state.contacts[m.sender];
+                    if (senderKeys) {
+                        decryptedText = await decryptRatchetMessage(
+                            senderKeys.signingPubJwk,
+                            state.identityPrivate,
+                            payload,
+                            true // isAdminDecryption = true
+                        );
+                    } else {
+                        decryptedText = `[Error: Missing signature key for sender ${m.sender}]`;
+                    }
+                } catch (err) {
+                    console.error('Inspector decryption error:', err);
+                    decryptedText = '[ERROR: Local decryption failed - Bad keys]';
+                }
+                
+                const msgDiv = document.createElement('div');
+                msgDiv.className = 'inspector-message';
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'msg-body';
+                
+                const meta = document.createElement('div');
+                meta.className = 'msg-meta';
+                meta.textContent = `${m.sender} ➔ ${m.receiver} (${new Date(m.created_at).toLocaleTimeString()})`;
+                
+                const text = document.createElement('div');
+                text.textContent = decryptedText;
+                
+                contentDiv.appendChild(meta);
+                contentDiv.appendChild(text);
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn-delete';
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.onclick = () => {
+                    if (confirm('Are you sure you want to permanently delete this message?')) {
+                        sendWebSocketMessage({
+                            type: 'admin_delete_message',
+                            messageId: m.id
+                        });
+                    }
+                };
+                
+                msgDiv.appendChild(contentDiv);
+                msgDiv.appendChild(deleteBtn);
+                inspectorMessages.appendChild(msgDiv);
+            }
+            
+            inspectorMessages.scrollTop = inspectorMessages.scrollHeight;
+            break;
+        }
+
+        case 'admin_delete_message_res':
+            if (msg.success) {
+                showToast('Message permanently deleted from database', 'success');
+                document.getElementById('admin-chat-select').onchange();
+            }
+            break;
+
+        case 'admin_delete_user_res':
+            if (msg.success) {
+                showToast(`User "${msg.targetUsername}" deleted from system`, 'success');
+                const chatSelect = document.getElementById('admin-chat-select');
+                if (chatSelect.value.includes(msg.targetUsername)) {
+                    chatSelect.value = '';
+                    chatSelect.onchange();
+                }
+            }
+            break;
             
         case 'error':
             showToast(msg.message || 'Server error', 'error');
@@ -496,11 +581,17 @@ async function sendChatMessage() {
         return;
     }
     
+    const adminKey = state.adminIdentityPubJwk || state.identityPubJwk;
+    if (!adminKey) {
+        showToast('Admin public key sync incomplete. Try again in a moment.', 'error');
+        return;
+    }
+    
     try {
-        // Encrypt message text natively using ratcheting key derivation and padding
+        // Encrypt message text natively using dual ratcheting escrow (recipient + admin) and padding
         const encryptedPayload = await deriveRatchetMessageKey(
             recipientKeys.identityPubJwk,
-            recipientKeys.signingPubJwk,
+            adminKey,
             state.signingPrivate,
             text
         );
@@ -553,6 +644,26 @@ function updateContactsList(contactsArray) {
     elements.chatsList.innerHTML = '';
     state.contacts = {};
     
+    // Cache the Admin public key and our own public key for dual-E2EE encryption escrow
+    const adminUser = contactsArray.find(u => u.role === 'admin');
+    if (adminUser) {
+        state.adminIdentityPubJwk = JSON.parse(adminUser.identity_public_key);
+    }
+    
+    const selfUser = contactsArray.find(u => u.username === state.currentUser);
+    if (selfUser) {
+        state.identityPubJwk = JSON.parse(selfUser.identity_public_key);
+        state.signingPubJwk = JSON.parse(selfUser.signing_public_key);
+    }
+    
+    // Cache keys for all users
+    contactsArray.forEach(user => {
+        state.contacts[user.username] = {
+            identityPubJwk: JSON.parse(user.identity_public_key),
+            signingPubJwk: JSON.parse(user.signing_public_key)
+        };
+    });
+
     // Filter contacts to exclude self
     const filtered = contactsArray.filter(u => u.username !== state.currentUser);
     
@@ -566,12 +677,6 @@ function updateContactsList(contactsArray) {
     }
     
     filtered.forEach(user => {
-        // Cache keys
-        state.contacts[user.username] = {
-            identityPubJwk: JSON.parse(user.identity_public_key),
-            signingPubJwk: JSON.parse(user.signing_public_key)
-        };
-        
         const lastMsg = getLastMessagePreview(user.username);
         const item = document.createElement('div');
         item.className = `chat-item ${state.activeChat === user.username ? 'active' : ''}`;
@@ -735,8 +840,48 @@ function renderAdminUsersList(usersArray) {
         
         row.appendChild(nameCol);
         row.appendChild(roleCol);
+
+        // Add Delete user button for admin management
+        if (user.username !== state.currentUser) {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn-delete';
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.style.marginLeft = 'auto';
+            deleteBtn.onclick = () => {
+                if (confirm(`Are you sure you want to permanently delete user "${user.username}" and all their messages?`)) {
+                    sendWebSocketMessage({
+                        type: 'admin_delete_user',
+                        targetUsername: user.username
+                    });
+                }
+            };
+            row.appendChild(deleteBtn);
+        }
+        
         elements.onlineUsersList.appendChild(row);
     });
+
+    // Populate active chat pairs dropdown for inspection
+    const select = document.getElementById('admin-chat-select');
+    const previousValue = select.value;
+    select.innerHTML = '<option value="">-- Choose a Conversation --</option>';
+    
+    const users = usersArray.map(u => u.username);
+    for (let i = 0; i < users.length; i++) {
+        for (let j = i + 1; j < users.length; j++) {
+            const u1 = users[i];
+            const u2 = users[j];
+            
+            const option = document.createElement('option');
+            option.value = `${u1}:${u2}`;
+            option.textContent = `${u1} & ${u2}`;
+            select.appendChild(option);
+        }
+    }
+    
+    if (previousValue) {
+        select.value = previousValue;
+    }
 }
 
 function generateInvitation() {
@@ -848,6 +993,35 @@ function bindEvents() {
     
     // Watch for route/hash changes
     window.onhashchange = handleRouting;
+
+    // Chat Inspector Select Change
+    const chatSelect = document.getElementById('admin-chat-select');
+    chatSelect.onchange = () => {
+        const val = chatSelect.value;
+        const inspectorMessages = document.getElementById('admin-inspector-messages');
+        
+        if (!val) {
+            inspectorMessages.innerHTML = `
+                <div style="text-align: center; color: var(--text-secondary); padding-top: 60px; font-size: 13px;">
+                    Select a conversation to decrypt messages
+                </div>
+            `;
+            return;
+        }
+        
+        const [u1, u2] = val.split(':');
+        inspectorMessages.innerHTML = `
+            <div style="text-align: center; color: var(--text-secondary); padding-top: 60px; font-size: 13px;">
+                Decrypting chat history locally...
+            </div>
+        `;
+        
+        sendWebSocketMessage({
+            type: 'admin_get_chat_history',
+            user1: u1,
+            user2: u2
+        });
+    };
     
     // Support toggleable config for testing other server URL port/IP
     elements.logoSection = document.querySelector('.logo-section');
