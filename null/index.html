@@ -101,6 +101,7 @@
 
             <div class="form-footer">
                 <button id="login-submit-btn" class="btn">Unlock & Connect</button>
+                <button id="login-qr-btn" class="btn btn-secondary">Login with QR Code</button>
             </div>
             
             <div class="form-links" id="login-signup-link">
@@ -250,10 +251,34 @@
             </div>
         </div>
     </div>
+    
+    <!-- QR Login Overlay -->
+    <div id="qr-login-overlay" class="overlay hidden">
+        <div class="form-card" style="text-align: center;">
+            <div class="form-header">
+                <h2>Scan QR to Login</h2>
+                <p>Open the NULL app on your mobile device, scan this code, and authorize this session to log in securely.</p>
+            </div>
+            
+            <div id="qr-code-container" style="background: white; padding: 16px; border-radius: 16px; display: inline-block; margin: 20px auto; width: 200px; height: 200px;">
+                <!-- QR Code image injected here -->
+            </div>
+            
+            <div style="color: var(--text-secondary); font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px;">
+                <span class="status-dot online" style="animation: pulse 1.5s infinite;"></span>
+                <span>Waiting for mobile verification...</span>
+            </div>
+
+            <div class="form-footer" style="margin-top: 20px;">
+                <button id="cancel-qr-login-btn" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Toast Notifications Container -->
     <div class="toast-container" id="toast-container"></div>
 
+    <script src="qrcode.min.js"></script>
     <script type="module" src="app.js"></script>
 </body>
 </html>

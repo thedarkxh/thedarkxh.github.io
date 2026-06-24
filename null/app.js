@@ -34,6 +34,10 @@ const state = {
     // Auth flow temporary challenge
     tempChallenge: null,
     
+    // QR Login transient state
+    qrSessionId: null,
+    tempEcdhKeyPair: null,
+    
     // Reconnection
     reconnectTimer: null,
     
@@ -53,13 +57,17 @@ const elements = {
     registerOverlay: document.getElementById('register-overlay'),
     bootstrapOverlay: document.getElementById('bootstrap-overlay'),
     adminOverlay: document.getElementById('admin-overlay'),
+    qrLoginOverlay: document.getElementById('qr-login-overlay'),
     
     // Login form
     loginUsername: document.getElementById('login-username'),
     loginPassword: document.getElementById('login-password'),
     loginSubmitBtn: document.getElementById('login-submit-btn'),
+    loginQrBtn: document.getElementById('login-qr-btn'),
     loginSignupLink: document.getElementById('login-signup-link'),
     bootstrapNotice: document.getElementById('bootstrap-notice'),
+    qrCodeContainer: document.getElementById('qr-code-container'),
+    cancelQrLoginBtn: document.getElementById('cancel-qr-login-btn'),
     
     // Register form
     registerUsername: document.getElementById('register-username'),
@@ -117,6 +125,7 @@ function showOverlay(overlayEl) {
     elements.loginOverlay.classList.add('hidden');
     elements.registerOverlay.classList.add('hidden');
     elements.bootstrapOverlay.classList.add('hidden');
+    elements.qrLoginOverlay.classList.add('hidden');
     
     if (overlayEl) {
         overlayEl.classList.remove('hidden');
@@ -256,38 +265,20 @@ async function handleIncomingMessage(msg) {
             
         case 'login_res':
             if (msg.success) {
-                state.currentUser = msg.username;
-                state.role = msg.role;
-                showToast(`Access granted. Welcome back, ${msg.username}!`, 'success');
-                
-                // Set up UI for profile
-                elements.userProfileSection.innerHTML = `
-                    <div class="user-avatar-mini">${state.currentUser.substring(0,2).toUpperCase()}</div>
-                    <span style="font-weight:600;">${state.currentUser}</span>
-                    <span style="font-size:10px; color:var(--text-secondary); background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:8px;">
-                        ${state.role}
-                    </span>
-                `;
-                
-                if (state.role === 'admin') {
-                    elements.adminPanelBtn.classList.remove('hidden');
-                } else {
-                    elements.adminPanelBtn.classList.add('hidden');
-                }
-                
-                elements.logoutBtn.classList.remove('hidden');
-                window.location.hash = '#/chat';
-                
-                // Start tracking inactivity timeout
-                resetInactivityTimeout();
-                
-                // Load contacts
-                sendWebSocketMessage({ type: 'get_contacts' });
+                completeLogin(msg.username, msg.role);
             } else {
                 showToast(msg.error || 'Authentication failed', 'error');
                 state.authHashHex = null;
                 state.kEncrypt = null;
             }
+            break;
+            
+        case 'qr_login_request_res':
+            await handleQrLoginRequestRes(msg.sessionId);
+            break;
+            
+        case 'qr_login_success':
+            await handleQrLoginSuccess(msg.username, msg.role, msg.mobPubJwk, msg.encPrivateKeys);
             break;
             
         case 'contacts_res':
@@ -614,6 +605,138 @@ async function handleKeyRegeneration() {
         console.error('Key regeneration error:', err);
         showToast('Failed to regenerate cryptographic identity keys.', 'error');
     }
+}
+
+// 4.2 Complete authentication and session recovery sequence
+function completeLogin(username, role) {
+    state.currentUser = username;
+    state.role = role;
+    showToast(`Access granted. Welcome back, ${username}!`, 'success');
+    
+    // Set up UI for profile
+    elements.userProfileSection.innerHTML = `
+        <div class="user-avatar-mini">${state.currentUser.substring(0,2).toUpperCase()}</div>
+        <span style="font-weight:600;">${state.currentUser}</span>
+        <span style="font-size:10px; color:var(--text-secondary); background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:8px;">
+            ${state.role}
+        </span>
+    `;
+    
+    if (state.role === 'admin') {
+        elements.adminPanelBtn.classList.remove('hidden');
+    } else {
+        elements.adminPanelBtn.classList.add('hidden');
+    }
+    
+    elements.logoutBtn.classList.remove('hidden');
+    
+    // Hide all login overlays
+    elements.loginOverlay.classList.add('hidden');
+    elements.qrLoginOverlay.classList.add('hidden');
+    
+    window.location.hash = '#/chat';
+    
+    // Start tracking inactivity timeout
+    resetInactivityTimeout();
+    
+    // Load contacts
+    sendWebSocketMessage({ type: 'get_contacts' });
+}
+
+// 4.3 QR Code Authentication Flow
+async function startQrLogin() {
+    showOverlay(elements.qrLoginOverlay);
+    elements.qrCodeContainer.innerHTML = '<div style="color:var(--text-secondary); padding-top:80px; font-size:12px;">Generating transient keys...</div>';
+    
+    try {
+        // Generate ephemeral ECDH keypair
+        state.tempEcdhKeyPair = await window.crypto.subtle.generateKey(
+            { name: 'ECDH', namedCurve: 'P-256' },
+            true,
+            ['deriveKey']
+        );
+        
+        sendWebSocketMessage({ type: 'qr_login_request' });
+    } catch (err) {
+        console.error('QR Session generation error:', err);
+        showToast('Failed to generate secure QR session.', 'error');
+        showOverlay(elements.loginOverlay);
+    }
+}
+
+async function handleQrLoginRequestRes(sessionId) {
+    state.qrSessionId = sessionId;
+    
+    try {
+        const webPubJwk = await window.crypto.subtle.exportKey('jwk', state.tempEcdhKeyPair.publicKey);
+        const qrData = JSON.stringify({
+            sessionId,
+            webPubJwk
+        });
+        
+        elements.qrCodeContainer.innerHTML = '';
+        // Render QR Code using David Shim's QRCode library loaded globally
+        new QRCode(elements.qrCodeContainer, {
+            text: qrData,
+            width: 200,
+            height: 200,
+            colorDark: '#0b0d17',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.M
+        });
+    } catch (err) {
+        console.error('Error rendering QR Code:', err);
+        showToast('Could not compile QR Code payload.', 'error');
+    }
+}
+
+async function handleQrLoginSuccess(username, role, mobPubJwk, encPrivateKeys) {
+    showToast('Mobile verification signature accepted. Decrypting E2EE keys...', 'info');
+    
+    try {
+        // Import mobile's public ECDH key
+        const mobPub = await window.crypto.subtle.importKey(
+            'jwk',
+            mobPubJwk,
+            { name: 'ECDH', namedCurve: 'P-256' },
+            true,
+            []
+        );
+        
+        // Derive shared secret key K_transfer
+        const kTransfer = await window.crypto.subtle.deriveKey(
+            { name: 'ECDH', public: mobPub },
+            state.tempEcdhKeyPair.privateKey,
+            { name: 'AES-GCM', length: 256 },
+            true,
+            ['decrypt']
+        );
+        
+        // Decrypt the user private keys from the E2EE key transfer payload
+        const decrypted = await decryptPrivateKeys(encPrivateKeys, kTransfer);
+        state.identityPrivate = decrypted.identityPrivate;
+        state.signingPrivate = decrypted.signingPrivate;
+        
+        // Clean up temp session
+        state.tempEcdhKeyPair = null;
+        state.qrSessionId = null;
+        
+        // Complete the login sequence
+        completeLogin(username, role);
+    } catch (err) {
+        console.error('QR Decryption failed:', err);
+        showToast('Failed to decrypt E2EE keys. Authentication session corrupt.', 'error');
+        state.tempEcdhKeyPair = null;
+        state.qrSessionId = null;
+        showOverlay(elements.loginOverlay);
+    }
+}
+
+function cancelQrLogin() {
+    state.tempEcdhKeyPair = null;
+    state.qrSessionId = null;
+    elements.qrCodeContainer.innerHTML = '';
+    showOverlay(elements.loginOverlay);
 }
 
 // 5. Encrypting & Sending Chat Message
@@ -1014,6 +1137,8 @@ function bindEvents() {
     elements.loginSubmitBtn.onclick = startLogin;
     elements.registerSubmitBtn.onclick = submitRegistration;
     elements.bootstrapSubmitBtn.onclick = submitBootstrap;
+    elements.loginQrBtn.onclick = startQrLogin;
+    elements.cancelQrLoginBtn.onclick = cancelQrLogin;
     
     // Sending message
     elements.sendMsgBtn.onclick = sendChatMessage;
