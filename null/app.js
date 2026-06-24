@@ -4,8 +4,8 @@ import {
     generateIdentityKeys,
     encryptPrivateKeys,
     decryptPrivateKeys,
-    encryptMessage,
-    decryptMessage,
+    deriveRatchetMessageKey,
+    decryptRatchetMessage,
     signAuthHandshake
 } from './crypto.js';
 
@@ -35,7 +35,10 @@ const state = {
     tempChallenge: null,
     
     // Reconnection
-    reconnectTimer: null
+    reconnectTimer: null,
+    
+    // Auto-Lock Inactivity
+    inactivityTimeout: null
 };
 
 // DOM Elements
@@ -271,6 +274,9 @@ async function handleIncomingMessage(msg) {
                 elements.logoutBtn.classList.remove('hidden');
                 window.location.hash = '#/chat';
                 
+                // Start tracking inactivity timeout
+                resetInactivityTimeout();
+                
                 // Load contacts
                 sendWebSocketMessage({ type: 'get_contacts' });
             } else {
@@ -491,9 +497,10 @@ async function sendChatMessage() {
     }
     
     try {
-        // Encrypt message text natively
-        const encryptedPayload = await encryptMessage(
+        // Encrypt message text natively using ratcheting key derivation and padding
+        const encryptedPayload = await deriveRatchetMessageKey(
             recipientKeys.identityPubJwk,
+            recipientKeys.signingPubJwk,
             state.signingPrivate,
             text
         );
@@ -508,6 +515,7 @@ async function sendChatMessage() {
         // Add to local history
         appendLocalMessage(recipient, state.currentUser, text);
         elements.messageInput.value = '';
+        resetInactivityTimeout();
     } catch (err) {
         console.error('Encryption failed:', err);
         showToast('Failed to encrypt message securely.', 'error');
@@ -523,8 +531,8 @@ async function handleIncomingChatMessage(sender, payload) {
     }
     
     try {
-        // Decrypt natively
-        const plaintext = await decryptMessage(
+        // Decrypt natively verifying signature and padding integrity
+        const plaintext = await decryptRatchetMessage(
             senderKeys.signingPubJwk,
             state.identityPrivate,
             payload
@@ -532,6 +540,7 @@ async function handleIncomingChatMessage(sender, payload) {
         
         appendLocalMessage(sender, sender, plaintext);
         showToast(`Secure message received from ${sender}`, 'info');
+        resetInactivityTimeout();
     } catch (err) {
         console.error('Decryption failed:', err);
         appendLocalMessage(sender, sender, '[ERROR: Secure decryption failed - Key mismatch or bad signature]');
@@ -745,6 +754,25 @@ function copyInviteLink() {
     showToast('Invite link copied to clipboard!', 'success');
 }
 
+// --- Inactivity Auto-Lock Tracker ---
+function resetInactivityTimeout() {
+    if (!state.currentUser) return; // only track if logged in
+    
+    if (state.inactivityTimeout) {
+        clearTimeout(state.inactivityTimeout);
+    }
+    
+    // 15 minutes session expiry
+    state.inactivityTimeout = setTimeout(lockSession, 15 * 60 * 1000);
+}
+
+function lockSession() {
+    if (!state.currentUser) return;
+    console.log('Session locked due to inactivity.');
+    elements.logoutBtn.click(); // trigger secure logout routine
+    showToast('Session locked due to inactivity. Memory cleared.', 'error');
+}
+
 // --- Event Listeners Binding ---
 
 function bindEvents() {
@@ -767,6 +795,12 @@ function bindEvents() {
     
     // Navigation / Router triggers
     elements.logoutBtn.onclick = () => {
+        // Clear inactivity timer
+        if (state.inactivityTimeout) {
+            clearTimeout(state.inactivityTimeout);
+            state.inactivityTimeout = null;
+        }
+        
         // Zero-out in-memory keys for security
         state.currentUser = null;
         state.role = null;
@@ -789,6 +823,7 @@ function bindEvents() {
     
     // Search bar helper
     elements.searchContacts.oninput = (e) => {
+        resetInactivityTimeout();
         const val = e.target.value.toLowerCase();
         const items = elements.chatsList.querySelectorAll('.chat-item');
         items.forEach(item => {
@@ -803,6 +838,7 @@ function bindEvents() {
     
     // Mobile responsive back button
     elements.backToSidebarBtn.onclick = () => {
+        resetInactivityTimeout();
         elements.chatSpace.classList.remove('active');
         elements.backToSidebarBtn.style.display = 'none';
         state.activeChat = null;
@@ -826,6 +862,12 @@ function bindEvents() {
             connectToBackend();
         }
     };
+
+    // Activity tracking listeners to reset inactivity auto-lock
+    window.addEventListener('mousemove', resetInactivityTimeout);
+    window.addEventListener('keydown', resetInactivityTimeout);
+    window.addEventListener('mousedown', resetInactivityTimeout);
+    window.addEventListener('touchstart', resetInactivityTimeout);
 }
 
 // Initialize Application
