@@ -770,6 +770,22 @@ header {
     box-shadow: 0 0 8px rgba(239, 68, 68, 0.2);
 }
 
+.btn-reset {
+    padding: 4px 8px;
+    font-size: 11px;
+    background: rgba(59, 130, 246, 0.15);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #93c5fd;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-reset:hover {
+    background: rgba(59, 130, 246, 0.3);
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.2);
+}
+
 .inspector-message {
     display: flex;
     justify-content: space-between;

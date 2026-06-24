@@ -246,8 +246,12 @@ async function handleIncomingMessage(msg) {
             break;
             
         case 'login_challenge':
-            // Server verifies username & hash, returns challenge
-            await handleLoginChallenge(msg.challenge, msg.encryptedPrivateKeys);
+            if (msg.requiresKeyRegeneration) {
+                await handleKeyRegeneration();
+            } else {
+                // Server verifies username & hash, returns challenge
+                await handleLoginChallenge(msg.challenge, msg.encryptedPrivateKeys);
+            }
             break;
             
         case 'login_res':
@@ -399,6 +403,14 @@ async function handleIncomingMessage(msg) {
                     chatSelect.value = '';
                     chatSelect.onchange();
                 }
+            }
+            break;
+
+        case 'admin_change_user_password_res':
+            if (msg.success) {
+                showToast(`Successfully changed password for user "${msg.targetUsername}".`, 'success');
+            } else {
+                showToast(msg.error || 'Failed to change password', 'error');
             }
             break;
             
@@ -565,6 +577,42 @@ async function handleLoginChallenge(challenge, encryptedPrivateKeys) {
         showToast('Could not decrypt private keys. Wrong passphrase?', 'error');
         state.authHashHex = null;
         state.kEncrypt = null;
+    }
+}
+
+// 4.1 Handle key regeneration on login when requires_key_regeneration is set
+async function handleKeyRegeneration() {
+    showToast('Admin reset detected. Generating new cryptographic identities...', 'info');
+    try {
+        // Generate E2EE key pairs
+        const { identityKeyPair, signingKeyPair } = await generateIdentityKeys();
+        
+        // Encrypt private keys locally using the derived K_encrypt
+        const encryptedPrivateKeys = await encryptPrivateKeys(
+            identityKeyPair.privateKey,
+            signingKeyPair.privateKey,
+            state.kEncrypt
+        );
+        
+        // Export public keys to JWK
+        const identityPubJwk = await window.crypto.subtle.exportKey('jwk', identityKeyPair.publicKey);
+        const signingPubJwk = await window.crypto.subtle.exportKey('jwk', signingKeyPair.publicKey);
+        
+        // Save in-memory copies for immediate use in messaging
+        state.identityPrivate = identityKeyPair.privateKey;
+        state.signingPrivate = signingKeyPair.privateKey;
+        state.identityPubJwk = identityPubJwk;
+        state.signingPubJwk = signingPubJwk;
+        
+        sendWebSocketMessage({
+            type: 'login_regenerate_keys',
+            identityPubJwk,
+            signingPubJwk,
+            encryptedPrivateKeys
+        });
+    } catch (err) {
+        console.error('Key regeneration error:', err);
+        showToast('Failed to regenerate cryptographic identity keys.', 'error');
     }
 }
 
@@ -841,12 +889,21 @@ function renderAdminUsersList(usersArray) {
         row.appendChild(nameCol);
         row.appendChild(roleCol);
 
-        // Add Delete user button for admin management
+        // Add action buttons for admin management
         if (user.username !== state.currentUser) {
+            const actionsDiv = document.createElement('div');
+            actionsDiv.style.display = 'flex';
+            actionsDiv.style.gap = '8px';
+            actionsDiv.style.marginLeft = 'auto';
+            
+            const resetBtn = document.createElement('button');
+            resetBtn.className = 'btn-reset';
+            resetBtn.textContent = 'Reset Pass';
+            resetBtn.onclick = () => adminChangeUserPassword(user.username);
+            
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'btn-delete';
             deleteBtn.textContent = 'Delete';
-            deleteBtn.style.marginLeft = 'auto';
             deleteBtn.onclick = () => {
                 if (confirm(`Are you sure you want to permanently delete user "${user.username}" and all their messages?`)) {
                     sendWebSocketMessage({
@@ -855,7 +912,12 @@ function renderAdminUsersList(usersArray) {
                     });
                 }
             };
-            row.appendChild(deleteBtn);
+            
+            actionsDiv.appendChild(resetBtn);
+            actionsDiv.appendChild(deleteBtn);
+            row.appendChild(actionsDiv);
+        } else {
+            roleCol.style.marginLeft = 'auto';
         }
         
         elements.onlineUsersList.appendChild(row);
@@ -881,6 +943,33 @@ function renderAdminUsersList(usersArray) {
     
     if (previousValue) {
         select.value = previousValue;
+    }
+}
+
+async function adminChangeUserPassword(username) {
+    const newPassword = prompt(`Enter new password for user "${username}":`);
+    if (!newPassword) return; // cancelled or empty
+    
+    if (newPassword.length < 8) {
+        showToast('Password must be at least 8 characters long.', 'error');
+        return;
+    }
+    
+    showToast(`Deriving cryptographic auth hash for "${username}"...`, 'info');
+    
+    try {
+        // Derive master and subkeys
+        const masterKey = await deriveMasterKey(username, newPassword);
+        const { authHashHex } = await deriveSubKeys(masterKey);
+        
+        sendWebSocketMessage({
+            type: 'admin_change_user_password',
+            targetUsername: username,
+            newAuthHash: authHashHex
+        });
+    } catch (err) {
+        console.error('Error deriving subkeys for password reset:', err);
+        showToast('Password reset derivation failed.', 'error');
     }
 }
 
