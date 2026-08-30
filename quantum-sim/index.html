@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A professional high-fidelity 3D fluid wave quantum double-slit simulation.">
+  <title>Quantum Double-Slit Experiment Simulator</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <!-- Material Design Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+  <!-- Local Styles -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="cockpit-container single-layout">
+    <!-- Header Area -->
+    <header class="cockpit-header">
+      <div class="header-left">
+        <div class="system-status">
+          <span class="status-indicator online"></span>
+          <span class="status-text">SYS.ONLINE</span>
+        </div>
+        <div class="divider"></div>
+        <div class="model-info">QUANTUM CORE v3.5 - DOUBLE-SLIT SIMULATOR</div>
+      </div>
+      
+      <div class="header-center">
+        <h1>QUANTUM DOUBLE-SLIT FLUID SYSTEM</h1>
+      </div>
+      
+      <div class="header-right">
+        <div class="clock-display" id="cockpit-clock">00:00:00</div>
+        <div class="divider"></div>
+        <div class="layout-selectors">
+          <button class="layout-btn" id="btn-toggle-capture" title="Toggle Clean Recording Mode (Hide UI) - Hotkey: Esc">
+            <span class="material-symbols-outlined">videocam</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Viewport (Full Screen Panel) -->
+    <main class="cockpit-grid single-panel-layout" id="main-grid">
+      <section class="panel double-slit-panel" id="panel-double-slit">
+        <div class="panel-header">
+          <div class="panel-title-wrapper">
+            <span class="material-symbols-outlined icon-glow">analytics</span>
+            <h2>DOUBLE-SLIT FLUID PROPAGATION &amp; DETECTOR</h2>
+          </div>
+          <div class="panel-controls">
+            <button class="panel-action-btn" id="btn-toggle-observer" title="Toggle Quantum Observer">
+              <span class="material-symbols-outlined">visibility</span>
+              <span class="btn-lbl">OBSERVER: OFF</span>
+            </button>
+            <button class="panel-action-btn" id="btn-clear-detector" title="Clear Screen Readings">
+              <span class="material-symbols-outlined">delete_sweep</span>
+            </button>
+            <span class="mode-badge particle-badge" id="slit-mode-indicator">WAVE COHERENCE</span>
+          </div>
+        </div>
+        
+        <div class="panel-content canvas-wrapper">
+          <div id="double-slit-3d-container"></div>
+          
+          <!-- Live Telemetry Overlays -->
+          <div class="sim-overlay-info">
+            <div class="info-metric">
+              <span class="label">Diffraction State:</span>
+              <span class="val text-success" id="state-text">Superposition</span>
+            </div>
+            <div class="info-metric">
+              <span class="label">Particles Fired:</span>
+              <span class="val" id="val-hit-count">0</span>
+            </div>
+            <div class="info-metric">
+              <span class="label">Pattern Resolution:</span>
+              <span class="val" id="val-fringe-pct">0%</span>
+            </div>
+          </div>
+          <div class="slit-helper-instructions">Drag to orbit &bull; Scroll to zoom &bull; Slits glow Cyan (Observed: Pink)</div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer Controls Drawer -->
+    <footer class="cockpit-footer-controls">
+      <!-- Sliders Column -->
+      <div class="control-card">
+        <h3><span class="material-symbols-outlined">tune</span> WAVE &amp; APERTURE PARAMETERS</h3>
+        <div class="control-row">
+          <div class="control-label">
+            <span>Wavelength (λ)</span>
+            <span class="val-display" id="lbl-wavelength">532 nm</span>
+          </div>
+          <input type="range" class="cockpit-slider" id="slider-wavelength" min="400" max="750" value="532" aria-label="Wavelength in nanometers">
+        </div>
+        <div class="control-row">
+          <div class="control-label">
+            <span>Slit Separation (d)</span>
+            <span class="val-display" id="lbl-slit-dist">45 μm</span>
+          </div>
+          <input type="range" class="cockpit-slider" id="slider-slit-dist" min="15" max="90" value="45" aria-label="Slit separation in micrometers">
+        </div>
+        <div class="control-row">
+          <div class="control-label">
+            <span>Slit Width (w)</span>
+            <span class="val-display" id="lbl-slit-width">10 μm</span>
+          </div>
+          <input type="range" class="cockpit-slider" id="slider-slit-width" min="5" max="25" value="10" aria-label="Slit width in micrometers">
+        </div>
+      </div>
+
+      <!-- Settings Column -->
+      <div class="control-card">
+        <h3><span class="material-symbols-outlined">settings_input_antenna</span> PROPAGATION SPEED &amp; RATE</h3>
+        <div class="control-row">
+          <div class="control-label">
+            <span>Emitter Particle Rate</span>
+            <span class="val-display" id="lbl-particle-rate">120 p/s</span>
+          </div>
+          <input type="range" class="cockpit-slider" id="slider-particle-rate" min="10" max="400" value="120" aria-label="Emitter particle rate in particles per second">
+        </div>
+        <div class="control-row">
+          <div class="control-label">
+            <span>Wave speed</span>
+            <span class="val-display" id="lbl-wave-speed">1.50 Hz</span>
+          </div>
+          <input type="range" class="cockpit-slider" id="slider-wave-speed" min="5" max="30" value="15" aria-label="Propagation speed frequency">
+        </div>
+      </div>
+
+      <!-- presets Card -->
+      <div class="control-card buttons-card">
+        <h3><span class="material-symbols-outlined">science</span> WAVE PRESETS</h3>
+        <div class="preset-buttons-grid">
+          <button class="preset-btn" id="preset-electron">
+            <span class="material-symbols-outlined">deblur</span> Electron Beam
+          </button>
+          <button class="preset-btn" id="preset-red-photon">
+            <span class="material-symbols-outlined">light_mode</span> Red Photon
+          </button>
+          <button class="preset-btn" id="preset-violet-photon">
+            <span class="material-symbols-outlined">wb_twilight</span> Violet Photon
+          </button>
+          <button class="preset-btn" id="preset-coherent-slit">
+            <span class="material-symbols-outlined">waves</span> Coherent Slit
+          </button>
+        </div>
+        
+        <div class="simulation-playback-controls">
+          <button class="playback-btn primary" id="btn-play-pause">
+            <span class="material-symbols-outlined" id="play-pause-icon">pause</span>
+            <span id="play-pause-lbl">PAUSE SIMULATION</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Log Terminal -->
+      <div class="control-card terminal-card">
+        <h3><span class="material-symbols-outlined">terminal</span> SYSTEM TELEMETRY</h3>
+        <div class="terminal-log" id="telemetry-log">
+          <div class="log-line text-dim">[19:42:38] Initializing GPU Shader cores...</div>
+          <div class="log-line text-success">[19:42:39] WebGL custom Fragment shader: OK</div>
+          <div class="log-line">[19:42:40] Ready for fluid double-slit simulation.</div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Floating Restore UI button for Video mode -->
+    <button class="restore-ui-btn" id="btn-restore-ui" title="Restore Dashboard UI">
+      <span class="material-symbols-outlined">settings_backup_restore</span>
+      <span>RESTORE PANEL (Esc)</span>
+    </button>
+  </div>
+
+  <!-- CDN scripts for WebGL Three.js & OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  
+  <!-- Simulation Engine Modules -->
+  <script src="doubleSlit.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
