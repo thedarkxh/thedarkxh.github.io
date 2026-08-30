@@ -1667,7 +1667,7 @@
                     Undergraduate Applicant in <strong>Computational Science</strong>, <strong>Embedded Systems</strong>, and <strong>Applied Physics</strong>. Competing nationally in <strong>10M Air Pistol</strong>.
                 </p>
                 <p style="font-size: 0.84rem; font-family: var(--font-mono); color: var(--accent-primary); margin-top: -12px; margin-bottom: 16px;">
-                    Focus on Computational Science & Systems • Interested in English-taught programs in Japan & global institutions.
+                    Focus on Computational Science & Systems • Interested in English-taught programs in Japan and internationally.
                 </p>
                 <p style="color: var(--text-dim); font-size: 0.92rem; margin-top: -10px; margin-bottom: 20px; line-height: 1.6;">
                     <em>"I design and build computational and physical systems to explore problems in physics and engineering."</em>
@@ -2001,12 +2001,57 @@
                     </div>
                 </div>
 
+                <!-- Auditable Responsibility Matrix -->
+                <div style="margin-top: 24px; overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem; font-family: var(--font-mono); color: var(--text-dim);">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--glass-border); text-align: left; color: var(--accent-primary);">
+                                <th style="padding: 10px 14px;">Engineering Stage</th>
+                                <th style="padding: 10px 14px;">Human Role (Samar Aditya)</th>
+                                <th style="padding: 10px 14px;">AI Tooling Role (Claude/Antigravity/Hermes)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td style="padding: 10px 14px; font-weight: 600; color: #fff;">Problem Formulation & Specs</td>
+                                <td style="padding: 10px 14px; color: #10b981;">✅ 100% Primary (Equations, Constraints, Goals)</td>
+                                <td style="padding: 10px 14px;">Assistance & Context Exploration</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td style="padding: 10px 14px; font-weight: 600; color: #fff;">System Architecture & Data Flow</td>
+                                <td style="padding: 10px 14px; color: #10b981;">✅ 100% Primary (Buffers, Schema, State)</td>
+                                <td style="padding: 10px 14px;">Structural Suggestions & Scaffolding</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td style="padding: 10px 14px; font-weight: 600; color: #fff;">Implementation & Boilerplate</td>
+                                <td style="padding: 10px 14px; color: #f59e0b;">Directed & Actively Supervised</td>
+                                <td style="padding: 10px 14px; color: #10b981;">✅ Major Code Generation Acceleration</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td style="padding: 10px 14px; font-weight: 600; color: #fff;">Testing & Edge-Case Probing</td>
+                                <td style="padding: 10px 14px; color: #10b981;">✅ 100% Primary (Failure Analysis, Boundary Cases)</td>
+                                <td style="padding: 10px 14px;">Test Harness Generator</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td style="padding: 10px 14px; font-weight: 600; color: #fff;">Empirical Profiling & Benchmarking</td>
+                                <td style="padding: 10px 14px; color: #10b981;">✅ 100% Primary (DevTools, FPS, Convergence)</td>
+                                <td style="padding: 10px 14px;">Synthetic Benchmark Scaffolding</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 10px 14px; font-weight: 600; color: #fff;">Final Technical Responsibility</td>
+                                <td style="padding: 10px 14px; color: #10b981;">✅ 100% Sole Owner & Interview Defender</td>
+                                <td style="padding: 10px 14px; color: #ef4444;">❌ None</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
                 <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 14px; padding: 20px; margin-top: 20px;">
                     <h4 style="font-family: var(--font-heading); font-size: 1.1rem; color: #fff; margin-bottom: 8px;">
                         <i class="fas fa-shield-halved" style="color: var(--accent-primary);"></i> Admissions Interview Readiness
                     </h4>
                     <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6;">
-                        I do not present myself as someone who manually typed 10,000 lines of boilerplate. I present myself as a student systems developer who knows <strong>why SGP4 was chosen</strong>, <strong>how coordinate transformations map to WebGL buffers</strong>, <strong>where algorithms fail</strong>, and <strong>how to direct AI agents to build production-grade computational tools</strong>.
+                        I do not present myself as someone who manually typed thousands of lines of syntax boilerplate. I present myself as a student systems engineer who knows <strong>why SGP4 was chosen</strong>, <strong>how coordinate transformations map to GPU buffers</strong>, <strong>where algorithms fail</strong>, and <strong>how to direct AI agents to build production-grade computational tools</strong>.
                     </p>
                 </div>
             </div>
@@ -2018,7 +2063,7 @@
                 <span class="section-tag">04 / SOFTWARE LAB</span>
                 <h2 class="section-title"><i class="fas fa-layer-group"></i> Applied Software Lab & Explorations</h2>
                 <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 6px;">
-                    Secondary software projects, automated data pipelines, and educational infrastructure prototypes.
+                    Low-level hardware/SIMD experiments, automated data pipelines, security suites, and web architectures.
                 </p>
             </div>
 
@@ -2026,7 +2071,8 @@
             <div class="portfolio-controls">
                 <div class="filter-tabs">
                     <button class="filter-btn active" onclick="filterProjects('all', this)">All Lab Projects</button>
-                    <button class="filter-btn" onclick="filterProjects('systems', this)">Automation & Systems</button>
+                    <button class="filter-btn" onclick="filterProjects('lowlevel', this)">Low-Level & Assembly</button>
+                    <button class="filter-btn" onclick="filterProjects('systems', this)">Automation & Pipelines</button>
                     <button class="filter-btn" onclick="filterProjects('web', this)">Web Architectures</button>
                     <button class="filter-btn" onclick="filterProjects('security', this)">Security & Ciphers</button>
                 </div>
@@ -2038,6 +2084,32 @@
 
             <!-- Grid -->
             <div class="projects-grid" id="projects-container">
+
+                <!-- Low-Level Assembly Card -->
+                <div class="glass-card project-card" data-cat="lowlevel" data-title="x86_64 SSE Assembly Neural Kernels (asm-ai)">
+                    <div class="project-header">
+                        <span class="project-cat">LOW-LEVEL & ASSEMBLY</span>
+                        <div class="card-badges">
+                            <span class="badge-tag">x86_64 SIMD</span>
+                            <span class="badge-tag">SSE Registers</span>
+                        </div>
+                    </div>
+                    <h3 class="project-title">x86_64 SSE Neural Compute Kernels</h3>
+                    <p class="project-desc">
+                        Handwritten x86_64 assembly kernels executing vectorized dot products, ReLU activations (<code style="color:var(--accent-primary);">comiss</code>), and SGD gradient updates via SSE streaming registers (<code style="color:var(--accent-primary);">xmm0</code>–<code style="color:var(--accent-primary);">xmm4</code>) to study raw register-level arithmetic below runtime abstractions.
+                    </p>
+                    <div class="project-tech-stack">
+                        <span class="badge-tag">x86_64 Assembly</span>
+                        <span class="badge-tag">SSE / SIMD</span>
+                        <span class="badge-tag">C ABI</span>
+                        <span class="badge-tag">GDB / Makefile</span>
+                    </div>
+                    <div class="project-actions">
+                        <button class="btn-secondary" onclick="openProjectModal('asmai')">
+                            <span>Inspect Assembly Engine</span> <i class="fas fa-code"></i>
+                        </button>
+                    </div>
+                </div>
 
                 <!-- CBSE Portal -->
                 <div class="glass-card project-card" data-cat="web" data-title="cbse next-gen portal react vite systems architecture teds mordare" onclick="openProjectModal('cbse')">
@@ -2864,6 +2936,22 @@
                 desc: "Real-time Morse code and cryptographic cipher translator featuring Web Audio API frequency synthesis and binary pulse wave visualization.",
                 tags: ["Web Audio API", "Signal Encoding", "Oscillators", "Cryptography"],
                 link: "https://thedarkxh.github.io/Morse/"
+            },
+            asmai: {
+                title: "x86_64 SSE Assembly Neural Compute Kernels",
+                badge: "SYSTEMS & LOW-LEVEL COMPUTING • SIMD ASSEMBLY",
+                desc: `
+                    <strong>Problem:</strong> High-level ML frameworks abstract away CPU register allocations, cache line boundaries, and SIMD instruction pipelines.<br><br>
+                    <strong>Architecture:</strong> Handwritten x86_64 assembly kernels using Intel SSE streaming registers (<code>xmm0</code>–<code>xmm4</code>) for low-latency neural forward propagation and backpropagation:<br>
+                    • <code>compute_neuron</code>: Evaluates scalar neuron activation ($y = w \\cdot x + b$) via <code>mulss</code> and <code>addss</code> instructions.<br>
+                    • <code>vector_dot</code>: Implements loop-unrolled SIMD dot products over contiguous float arrays.<br>
+                    • <code>relu_layer</code>: Vectorized ReLU activation using <code>comiss</code> comparisons and conditional moves to avoid branch mispredictions.<br>
+                    • <code>train_layer</code>: In-place SGD gradient updates ($w_i \\leftarrow w_i + \\eta \\cdot \\delta \\cdot x_i$).<br><br>
+                    <strong>Systems Integration:</strong> C ABI linking compiled object files with a Linux CLI test runner, validating register states via GDB.
+                `,
+                tags: ["x86_64 Assembly", "SSE / SIMD", "C ABI", "Register Pipeline", "Low-Level Systems"],
+                link: null,
+                github: null
             },
             ironvault: {
                 title: "IronVault & NULL Security Suite",
